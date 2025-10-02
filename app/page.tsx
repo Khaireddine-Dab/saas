@@ -97,13 +97,13 @@ export default function LandingPage() {
       >
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2 font-bold">
-            <div className="size-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center overflow-hidden">
+            <div className="size-10 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center overflow-hidden">
               <Image
                 src="/logo.png"
                 alt="talkBridge Logo"
                 width={32}
                 height={32}
-                className="w-11 h-11 object-contain"
+                className="w-8 h-8 object-contain"
               />
             </div>
             <span>talkBridge</span>
@@ -114,6 +114,12 @@ export default function LandingPage() {
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               {t("features")}
+            </Link>
+            <Link
+              href="#pricing"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {t("pricing")}
             </Link>
             <Link
               href="#testimonials"
@@ -135,7 +141,7 @@ export default function LandingPage() {
               <span className="sr-only">Toggle theme</span>
             </Button>
             <Link
-              href="#"
+              href="/login"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               {t("login")}
@@ -165,6 +171,9 @@ export default function LandingPage() {
               <Link href="#features" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
                 {t("features")}
               </Link>
+              <Link href="#pricing" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
+                {t("pricing")}
+              </Link>
               <Link href="#testimonials" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
                 {t("testimonials")}
               </Link>
@@ -172,7 +181,7 @@ export default function LandingPage() {
                 {t("faq")}
               </Link>
               <div className="flex flex-col gap-2 pt-2 border-t">
-                <Link href="#" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
+                <Link href="/login" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
                   {t("login")}
                 </Link>
                 <Button
@@ -282,6 +291,165 @@ export default function LandingPage() {
                 </motion.div>
               ))}
             </motion.div>
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section id="pricing" className="w-full py-20 md:py-32 bg-muted/30">
+          <div className="container px-4 md:px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="flex flex-col items-center justify-center space-y-4 text-center mb-12"
+            >
+              <Badge className="rounded-full px-4 py-1.5 text-sm font-medium" variant="secondary">
+                {t("pricing")}
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">{t("pricingTitle")}</h2>
+              <p className="max-w-[800px] text-muted-foreground md:text-lg">{t("pricingDescription")}</p>
+            </motion.div>
+
+            <div className="grid gap-8 md:grid-cols-3 max-w-6xl mx-auto">
+              {/* Starter Plan */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
+                <Card className="h-full overflow-hidden border-border/40 bg-gradient-to-b from-background to-muted/10 backdrop-blur transition-all hover:shadow-lg">
+                  <CardContent className="p-8 flex flex-col h-full">
+                    <h3 className="text-2xl font-bold mb-2">{t("starterPlan")}</h3>
+                    <p className="text-muted-foreground mb-6">{t("starterDescription")}</p>
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold">{t("starterPrice")}</span>
+                      <span className="text-muted-foreground">{t("perMonth")}</span>
+                    </div>
+                    <Button className="w-full rounded-full mb-6">{t("choosePlan")}</Button>
+                    <ul className="space-y-3 flex-grow">
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("starterFeature1")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("starterFeature2")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("starterFeature3")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("starterFeature4")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("starterFeature5")}</span>
+                      </li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Professional Plan */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <Card className="h-full overflow-hidden border-primary/50 bg-gradient-to-b from-background to-primary/5 backdrop-blur transition-all hover:shadow-xl relative">
+                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
+                    {t("mostPopular")}
+                  </div>
+                  <CardContent className="p-8 flex flex-col h-full">
+                    <h3 className="text-2xl font-bold mb-2">{t("professionalPlan")}</h3>
+                    <p className="text-muted-foreground mb-6">{t("professionalDescription")}</p>
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold">{t("professionalPrice")}</span>
+                      <span className="text-muted-foreground">{t("perMonth")}</span>
+                    </div>
+                    <Button className="w-full rounded-full mb-6">{t("choosePlan")}</Button>
+                    <ul className="space-y-3 flex-grow">
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("professionalFeature1")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("professionalFeature2")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("professionalFeature3")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("professionalFeature4")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("professionalFeature5")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("professionalFeature6")}</span>
+                      </li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Enterprise Plan */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <Card className="h-full overflow-hidden border-border/40 bg-gradient-to-b from-background to-muted/10 backdrop-blur transition-all hover:shadow-lg">
+                  <CardContent className="p-8 flex flex-col h-full">
+                    <h3 className="text-2xl font-bold mb-2">{t("enterprisePlan")}</h3>
+                    <p className="text-muted-foreground mb-6">{t("enterpriseDescription")}</p>
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold">{t("enterprisePrice")}</span>
+                    </div>
+                    <Button variant="outline" className="w-full rounded-full mb-6 bg-transparent">
+                      {t("contactSales")}
+                    </Button>
+                    <ul className="space-y-3 flex-grow">
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("enterpriseFeature1")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("enterpriseFeature2")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("enterpriseFeature3")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("enterpriseFeature4")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("enterpriseFeature5")}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{t("enterpriseFeature6")}</span>
+                      </li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
           </div>
         </section>
 
@@ -531,7 +699,7 @@ export default function LandingPage() {
                 </Button>
               </div>
               <div className="text-sm text-primary-foreground/80 mt-4 space-y-1">
-                <p>{t("email")}: talkBridge.ai@gmail.com</p>
+                <p>{t("email")}: talkbridge.ai@gmail.com</p>
                 <p>{t("phone")}: +216 50704630</p>
               </div>
             </motion.div>
@@ -546,10 +714,10 @@ export default function LandingPage() {
                 <div className="size-8 rounded-full bg-white border border-gray-200 flex items-center justify-center overflow-hidden">
                   <Image
                     src="/logo.png"
-                    alt="EchoRift Logo"
+                    alt="talkBridge Logo"
                     width={24}
                     height={24}
-                    className="w-9 h-9 object-contain"
+                    className="w-6 h-6 object-contain"
                   />
                 </div>
                 <span>talkBridge</span>
@@ -559,8 +727,8 @@ export default function LandingPage() {
                 <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="26"
-                    height="26"
+                    width="24"
+                    height="24"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -617,6 +785,11 @@ export default function LandingPage() {
                 <li>
                   <Link href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
                     {t("features")}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+                    {t("pricing")}
                   </Link>
                 </li>
                 <li>
@@ -684,7 +857,7 @@ export default function LandingPage() {
           </div>
           <div className="flex flex-col gap-4 sm:flex-row justify-between items-center border-t border-border/40 pt-8">
             <p className="text-xs text-muted-foreground">
-              &copy; {new Date().getFullYear()} talkBridge. {t("allRightsReserved")}
+              &copy; {new Date().getFullYear()} EchoRift. {t("allRightsReserved")}
             </p>
             <div className="flex gap-4">
               <Link href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
