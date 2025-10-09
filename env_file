@@ -1,0 +1,11 @@
+# Django Settings
+SECRET_KEY=django-insecure-@j&8ggf@ae1uqrsv&iz3gj5ua(#4+w+otl2cleuy9ag!&j3x@f
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Database Settings
+DB_NAME=saas_db
+DB_USER=postgres
+DB_PASSWORD=password
+DB_HOST=localhost
+DB_PORT=5432
