@@ -17,6 +17,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageSelector } from "@/components/language-selector"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
+import { BackendStatusCompact } from "@/components/backend-status"
 
 export function DashboardHeader() {
   return (
@@ -43,6 +44,7 @@ export function DashboardHeader() {
 
       {/* Right Side Actions */}
       <div className="flex items-center gap-2">
+        <BackendStatusCompact />
         <LanguageSelector />
         <ThemeToggle />
 

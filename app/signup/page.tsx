@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useLanguage } from "@/contexts/language-context"
+import { AnimatedLogo } from "@/components/animated-logo"
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState("")
@@ -46,17 +47,13 @@ export default function SignupPage() {
         className="w-full max-w-md"
       >
         <div className="flex justify-center mb-8">
-          <Link href="/" className="flex items-center gap-2 font-bold text-2xl">
-            <div className="size-12 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center overflow-hidden">
-              <Image
-                src="/logo.png"
-                alt="talkBridge Logo"
-                width={40}
-                height={40}
-                className="w-10 h-10 object-contain"
-              />
-            </div>
-            <span>talkBridge</span>
+          <Link href="/">
+            <AnimatedLogo 
+              size={48} 
+              animationType="bounce"
+              textClassName="text-3xl"
+              className="hover:scale-105 transition-transform duration-300"
+            />
           </Link>
         </div>
 

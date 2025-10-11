@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { LayoutDashboard, BarChart3, Users, CreditCard, Settings, Bell, LogOut } from "lucide-react"
 import { useLanguage } from "@/contexts/language-context"
 import { translations } from "@/lib/translations"
+import { AnimatedLogo } from "@/components/animated-logo"
 
 const navigation = [
   { name: "dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -26,9 +27,14 @@ export function DashboardSidebar() {
   return (
     <div className="flex h-full w-64 flex-col border-r bg-background">
       <div className="flex h-16 items-center border-b px-6">
-        <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-          <LayoutDashboard className="h-6 w-6" />
-          <span>EchoRift</span>
+        <Link href="/dashboard">
+          <AnimatedLogo 
+            size={36} 
+            animationType="glow"
+            showText={false}
+            className="hover:scale-105 transition-transform duration-300"
+          />
+          <span className="ml-2 font-semibold text-lg">talkBridge</span>
         </Link>
       </div>
       <ScrollArea className="flex-1 px-3 py-4">

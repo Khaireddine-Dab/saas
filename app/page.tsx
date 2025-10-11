@@ -12,6 +12,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useTheme } from "next-themes"
 import { CalendlyModal } from "@/components/calendly-modal"
 import { useLanguage } from "@/contexts/language-context"
+import { AnimatedLogo } from "@/components/animated-logo"
+import { BackendStatus } from "@/components/backend-status"
 import { LanguageSelector } from "@/components/language-selector"
 
 export default function LandingPage() {
@@ -96,18 +98,11 @@ export default function LandingPage() {
         className={`sticky top-0 z-50 w-full backdrop-blur-lg transition-all duration-300 ${isScrolled ? "bg-background/80 shadow-sm" : "bg-transparent"}`}
       >
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2 font-bold">
-            <div className="size-10 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center overflow-hidden">
-              <Image
-                src="/logo.png"
-                alt="talkBridge Logo"
-                width={32}
-                height={32}
-                className="w-8 h-8 object-contain"
-              />
-            </div>
-            <span>talkBridge</span>
-          </div>
+          <AnimatedLogo 
+            size={42} 
+            animationType="rotate"
+            className="hover:scale-105 transition-transform duration-300"
+          />
           <nav className="hidden md:flex gap-8">
             <Link
               href="#features"
@@ -135,6 +130,7 @@ export default function LandingPage() {
             </Link>
           </nav>
           <div className="hidden md:flex gap-4 items-center">
+            <BackendStatus />
             <LanguageSelector />
             <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full">
               {mounted && theme === "dark" ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
@@ -149,6 +145,7 @@ export default function LandingPage() {
 
           </div>
           <div className="flex items-center gap-4 md:hidden">
+            <BackendStatus />
             <LanguageSelector />
             <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full">
               {mounted && theme === "dark" ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
