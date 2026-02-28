@@ -1,107 +1,170 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useLanguage } from "@/contexts/language-context"
-import { translations } from "@/lib/translations"
-import { Users, Activity, DollarSign, TrendingUp } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { toast } from "sonner"
+import { Check, X, Store, User, Mail, Hash, Loader2 } from "lucide-react"
+import { storesApi } from "@/lib/api"
+import { motion, AnimatePresence } from "framer-motion"
 
 export default function DashboardPage() {
-  const { language } = useLanguage()
-  const t = translations[language]
+  const [stores, setStores] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState<number | null>(null)
 
-  const stats = [
-    {
-      title: t.totalUsers,
-      value: "2,543",
-      change: "+12.5%",
-      icon: Users,
-      color: "text-blue-600",
-    },
-    {
-      title: t.activeUsers,
-      value: "1,892",
-      change: "+8.2%",
-      icon: Activity,
-      color: "text-green-600",
-    },
-    {
-      title: t.revenue,
-      value: "$45,231",
-      change: "+23.1%",
-      icon: DollarSign,
-      color: "text-yellow-600",
-    },
-    {
-      title: t.apiRequests,
-      value: "89,432",
-      change: "+15.3%",
-      icon: TrendingUp,
-      color: "text-purple-600",
-    },
-  ]
+  useEffect(() => {
+    fetchStores()
+  }, [])
+
+  const fetchStores = async () => {
+    setIsLoading(true)
+    try {
+      const data = await storesApi.getPending()
+      setStores(data)
+    } catch (error: any) {
+      toast.error("Erreur lors de la récupération des boutiques")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleAction = async (id: number, action: 'validate' | 'reject') => {
+    setActionLoading(id)
+    try {
+      if (action === 'validate') {
+        await storesApi.validate(id)
+        toast.success("Boutique validée !")
+      } else {
+        await storesApi.reject(id)
+        toast.success("Boutique rejetée et supprimée.")
+      }
+      // Rafraîchir la liste
+      setStores(prev => prev.filter(s => s.id !== id))
+    } catch (error: any) {
+      toast.error(error.message)
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t.dashboard}</h1>
-        <p className="text-muted-foreground">{t.overview}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Vérification Stores</h1>
+          <p className="text-muted-foreground">Gérez les demandes d'ouverture de boutique en attente</p>
+        </div>
+        <Badge variant="outline" className="text-sm px-3 py-1">
+          {stores.length} en attente
+        </Badge>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">
-                <span className="text-green-600">{stat.change}</span> from last month
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <div className="grid gap-4">
+        <AnimatePresence mode="popLayout">
+          {stores.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-xl bg-background/50"
+            >
+              <Store className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
+              <p className="text-muted-foreground font-medium">Aucune boutique en attente de vérification</p>
+            </motion.div>
+          ) : (
+            stores.map((store) => (
+              <motion.div
+                key={store.id}
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="overflow-hidden border-border/40 hover:border-primary/20 transition-colors bg-background/95 backdrop-blur">
+                  <CardHeader className="bg-muted/30 pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          <Store className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-xl uppercase">{store.name}</CardTitle>
+                          <p className="text-sm text-muted-foreground capitalize">{store.city}, {store.address}</p>
+                        </div>
+                      </div>
+                      <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">PENDING</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid md:grid-cols-3 gap-6">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Hash className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-semibold">RNE:</span>
+                          <span className="font-mono bg-muted px-2 py-0.5 rounded">{store.rne || 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Store className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-semibold">Catégorie:</span>
+                          <span>{store.category || 'Standard'}</span>
+                        </div>
+                      </div>
 
-      {/* Recent Activity */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>{t.trafficOverview}</CardTitle>
-            <CardDescription>Your traffic over the last 30 days</CardDescription>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-              Chart placeholder - Will be implemented in Analytics section
-            </div>
-          </CardContent>
-        </Card>
+                      <div className="space-y-3 border-x border-border/40 px-6">
+                        <div className="flex items-center gap-2 text-sm">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-semibold">Propriétaire:</span>
+                          <span>{store.owner_details?.full_name || 'Inconnu'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-semibold">Email:</span>
+                          <span className="truncate">{store.owner_details?.email || store.email}</span>
+                        </div>
+                      </div>
 
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest updates from your account</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
-                    <Users className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium">New user registered</p>
-                    <p className="text-xs text-muted-foreground">
-                      {i} hour{i > 1 ? "s" : ""} ago
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                      <div className="flex items-center justify-end gap-3 px-2">
+                        <Button
+                          variant="outline"
+                          className="flex-1 max-w-[120px] rounded-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950"
+                          onClick={() => handleAction(store.id, 'reject')}
+                          disabled={actionLoading === store.id}
+                        >
+                          <X className="mr-2 h-4 w-4" />
+                          Rejeter
+                        </Button>
+                        <Button
+                          className="flex-1 max-w-[120px] rounded-full"
+                          onClick={() => handleAction(store.id, 'validate')}
+                          disabled={actionLoading === store.id}
+                        >
+                          {actionLoading === store.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <Check className="mr-2 h-4 w-4" />
+                              Valider
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )

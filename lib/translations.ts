@@ -7,7 +7,7 @@ export const translations = {
     login: "Log in",
     pricing: "Pricing",
     signUp: "Sign Up",
-    
+
 
     // Hero Section
     badge: "AI Technology",
@@ -95,7 +95,7 @@ export const translations = {
     termsOfService: "Terms of Service",
     cookiePolicy: "Cookie Policy",
     allRightsReserved: "All rights reserved.",
-        // Pricing Section
+    // Pricing Section
     pricingTitle: "Simple, Transparent Pricing",
     pricingDescription: "Choose the plan that's right for your business. No hidden fees, cancel anytime.",
     monthly: "Monthly",
@@ -157,7 +157,7 @@ export const translations = {
     google: "Google",
     github: "GitHub",
     //sidebar Navigation
-    dashboard: "Dashboard",
+    dashboard: "Verification Stores",
     analytics: "Analytics",
     users: "Users",
     billing: "Billing",
@@ -207,7 +207,7 @@ export const translations = {
     generalSettings: "General Settings",
     accountSettings: "Account Settings",
     apiKeys: "API Keys",
-    integrations: "Integrations",
+    integrationsSettings: "Integrations",
     preferences: "Preferences",
     language: "Language",
     timezone: "Timezone",
@@ -369,7 +369,7 @@ export const translations = {
     google: "جوجل",
     github: "جيت هاب",
     // Sidebar Navigation
-    dashboard: "لوحة التحكم",
+    dashboard: "التحقق من المتاجر",
     analytics: "التحليلات",
     users: "المستخدمون",
     billing: "الفواتير",
@@ -416,7 +416,7 @@ export const translations = {
     generalSettings: "الإعدادات العامة",
     accountSettings: "إعدادات الحساب",
     apiKeys: "مفاتيح API",
-    integrations: "التكاملات",
+    integrationsSettings: "التكاملات",
     preferences: "التفضيلات",
     language: "اللغة",
     timezone: "المنطقة الزمنية",
@@ -582,8 +582,8 @@ export const translations = {
     orContinueWith: "Ou continuer avec",
     google: "Google",
     github: "GitHub",
-     // Sidebar Navigation
-    dashboard: "Tableau de Bord",
+    // Sidebar Navigation
+    dashboard: "Vérification Stores",
     analytics: "Analytiques",
     users: "Utilisateurs",
     billing: "Facturation",
@@ -630,7 +630,7 @@ export const translations = {
     generalSettings: "Paramètres Généraux",
     accountSettings: "Paramètres du Compte",
     apiKeys: "Clés API",
-    integrations: "Intégrations",
+    integrationsSettings: "Intégrations",
     preferences: "Préférences",
     language: "Langue",
     timezone: "Fuseau Horaire",

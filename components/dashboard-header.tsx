@@ -1,6 +1,8 @@
 "use client"
 
-import { Bell, Search, Menu } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { Bell, Search, Menu, LogOut, User as UserIcon, Settings as SettingsIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -18,8 +20,35 @@ import { LanguageSelector } from "@/components/language-selector"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
 import { BackendStatusCompact } from "@/components/backend-status"
+import { toast } from "sonner"
 
 export function DashboardHeader() {
+  const router = useRouter()
+  const [user, setUser] = useState<{ full_name?: string, email?: string } | null>(null)
+
+  useEffect(() => {
+    const userData = localStorage.getItem("user")
+    if (userData) {
+      try {
+        setUser(JSON.parse(userData))
+      } catch (e) {
+        console.error("Erreur lors du parsing des données utilisateur")
+      }
+    }
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token")
+    localStorage.removeItem("refresh_token")
+    localStorage.removeItem("user")
+    toast.success("Déconnexion réussie")
+    router.push("/login")
+  }
+
+  const userInitials = user?.full_name
+    ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : user?.email ? user.email.slice(0, 2).toUpperCase() : "AD"
+
   return (
     <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background px-6">
       {/* Mobile Menu */}
@@ -71,12 +100,6 @@ export function DashboardHeader() {
                 <p className="text-xs text-muted-foreground">1 hour ago</p>
               </div>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium">Server maintenance scheduled</p>
-                <p className="text-xs text-muted-foreground">3 hours ago</p>
-              </div>
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -85,23 +108,36 @@ export function DashboardHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
               <Avatar className="h-9 w-9">
-                <AvatarImage src="/placeholder.svg?height=36&width=36" alt="User" />
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                  {userInitials}
+                </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium">John Doe</p>
-                <p className="text-xs text-muted-foreground">john@example.com</p>
+                <p className="text-sm font-medium truncate">{user?.full_name || "Administrateur"}</p>
+                <p className="text-xs text-muted-foreground truncate">{user?.email || ""}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <UserIcon className="mr-2 h-4 w-4" />
+              <span>Profil</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <SettingsIcon className="mr-2 h-4 w-4" />
+              <span>Paramètres</span>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Log out</DropdownMenuItem>
+            <DropdownMenuItem
+              className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Se déconnecter</span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -19,17 +19,29 @@ const navigation = [
   { name: "notifications", href: "/dashboard/notifications", icon: Bell },
 ]
 
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+
 export function DashboardSidebar() {
+  const router = useRouter()
   const pathname = usePathname()
   const { language } = useLanguage()
   const t = translations[language]
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token")
+    localStorage.removeItem("refresh_token")
+    localStorage.removeItem("user")
+    toast.success("Déconnexion réussie")
+    router.push("/login")
+  }
 
   return (
     <div className="flex h-full w-64 flex-col border-r bg-background">
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/dashboard">
-          <AnimatedLogo 
-            size={36} 
+          <AnimatedLogo
+            size={36}
             animationType="glow"
             showText={false}
             className="hover:scale-105 transition-transform duration-300"
@@ -60,7 +72,12 @@ export function DashboardSidebar() {
         </nav>
       </ScrollArea>
       <div className="border-t p-3">
-        <Button variant="ghost" className="w-full justify-start gap-3" size="sm">
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+          size="sm"
+          onClick={handleLogout}
+        >
           <LogOut className="h-4 w-4" />
           {t.logout}
         </Button>

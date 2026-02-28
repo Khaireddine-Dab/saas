@@ -22,7 +22,7 @@ export function useBackendStatus() {
     
     try {
       // Essayer de se connecter à l'endpoint des plans (accessible sans authentification)
-      const response = await fetch('http://localhost:8000/api/subscriptions/plans/', {
+      const response = await fetch('http://localhost:8000/api/users/list/', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

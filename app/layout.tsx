@@ -13,6 +13,8 @@ export const metadata: Metadata = {
     "AI-powered agents that handle calls, book appointments, and answer questions 24/7. Go live in under 24 hours.",
 }
 
+import { Toaster } from "sonner"
+
 export default function RootLayout({
   children,
 }: {
@@ -25,7 +27,10 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <LanguageProvider>{children}</LanguageProvider>
+          <LanguageProvider>
+            {children}
+            <Toaster position="top-right" richColors />
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

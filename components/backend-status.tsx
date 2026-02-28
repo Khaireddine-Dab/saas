@@ -6,12 +6,16 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useBackendStatus } from "@/hooks/useBackendStatus"
 
+const backendEnabled = !!process.env.NEXT_PUBLIC_BACKEND_URL
+
 interface BackendStatusProps {
   showDetails?: boolean
   className?: string
 }
 
 export function BackendStatus({ showDetails = false, className = "" }: BackendStatusProps) {
+  if (!backendEnabled) return null
+
   const { isConnected, isLoading, error, lastChecked, checkConnection } = useBackendStatus()
 
   const getStatusIcon = () => {
@@ -112,6 +116,8 @@ export function BackendStatus({ showDetails = false, className = "" }: BackendSt
 
 // Composant compact pour la barre de navigation
 export function BackendStatusCompact() {
+  if (!backendEnabled) return null
+
   const { isConnected, isLoading, checkConnection } = useBackendStatus()
 
   return (

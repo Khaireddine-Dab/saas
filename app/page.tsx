@@ -130,7 +130,6 @@ export default function LandingPage() {
             </Link>
           </nav>
           <div className="hidden md:flex gap-4 items-center">
-            <BackendStatus />
             <LanguageSelector />
             <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full">
               {mounted && theme === "dark" ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
@@ -142,10 +141,14 @@ export default function LandingPage() {
             >
               {t("login")}
             </Link>
-
+            <Link
+              href="/signup"
+              className="text-sm font-medium text-primary hover:text-primary/80"
+            >
+              {t("signUp")}
+            </Link>
           </div>
           <div className="flex items-center gap-4 md:hidden">
-            <BackendStatus />
             <LanguageSelector />
             <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full">
               {mounted && theme === "dark" ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
@@ -180,6 +183,9 @@ export default function LandingPage() {
               <div className="flex flex-col gap-2 pt-2 border-t">
                 <Link href="/login" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
                   {t("login")}
+                </Link>
+                <Link href="/signup" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
+                  {t("signUp")}
                 </Link>
                 <Button
                   className="rounded-full"

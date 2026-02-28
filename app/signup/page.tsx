@@ -1,39 +1,69 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useLanguage } from "@/contexts/language-context"
 import { AnimatedLogo } from "@/components/animated-logo"
+import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
+import { authApi } from "@/lib/api"
 
 export default function SignupPage() {
-  const [fullName, setFullName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [agreedToTerms, setAgreedToTerms] = useState(false)
-  const { t } = useLanguage()
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    terms: false
+  })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target
+    setFormData(prev => ({ ...prev, [id]: value }))
+  }
+
+  const handleCheckboxChange = (checked: boolean) => {
+    setFormData(prev => ({ ...prev, terms: checked }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password !== confirmPassword) {
-      alert("Passwords don't match!")
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Les mots de passe ne correspondent pas")
       return
     }
-    if (!agreedToTerms) {
-      alert("Please agree to the terms and privacy policy")
+
+    if (!formData.terms) {
+      toast.error("Veuillez accepter les conditions d'utilisation")
       return
     }
-    // Handle signup logic here
-    console.log("Signup:", { fullName, email, password })
+
+    setIsLoading(true)
+
+    try {
+      await authApi.signup({
+        email: formData.email,
+        password: formData.password,
+        full_name: formData.fullName,
+      })
+
+      toast.success("Compte créé avec succès ! Veuillez vous connecter.")
+      router.push("/login")
+
+    } catch (error: any) {
+      toast.error(error.message)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -48,8 +78,8 @@ export default function SignupPage() {
       >
         <div className="flex justify-center mb-8">
           <Link href="/">
-            <AnimatedLogo 
-              size={48} 
+            <AnimatedLogo
+              size={48}
               animationType="bounce"
               textClassName="text-3xl"
               className="hover:scale-105 transition-transform duration-300"
@@ -59,75 +89,82 @@ export default function SignupPage() {
 
         <Card className="border-border/40 bg-background/95 backdrop-blur">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">{t("createAccount")}</CardTitle>
-            <CardDescription className="text-center">{t("signupDescription")}</CardDescription>
+            <CardTitle className="text-2xl font-bold text-center">Créer un compte</CardTitle>
+            <CardDescription className="text-center">Inscrivez-vous pour commencer votre aventure</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">{t("fullName")}</Label>
+                <Label htmlFor="fullName">Nom complet</Label>
                 <Input
                   id="fullName"
                   type="text"
-                  placeholder="John Doe"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Jean Dupont"
+                  value={formData.fullName}
+                  onChange={handleChange}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">{t("emailAddress")}</Label>
+                <Label htmlFor="email">Adresse e-mail</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="nom@exemple.com"
+                  value={formData.email}
+                  onChange={handleChange}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">{t("password")}</Label>
+                <Label htmlFor="password">Mot de passe</Label>
                 <Input
                   id="password"
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={formData.password}
+                  onChange={handleChange}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
+                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
                   required
                 />
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="terms"
-                  checked={agreedToTerms}
-                  onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
+                  checked={formData.terms}
+                  onCheckedChange={handleCheckboxChange}
                 />
                 <label
                   htmlFor="terms"
                   className="text-sm text-muted-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  {t("agreeToTerms")}{" "}
+                  J'accepte les{" "}
                   <Link href="#" className="text-primary hover:underline">
-                    {t("termsOfService")}
+                    Conditions d'utilisation
                   </Link>{" "}
-                  {t("and")}{" "}
+                  et la{" "}
                   <Link href="#" className="text-primary hover:underline">
-                    {t("privacyPolicy")}
+                    Politique de confidentialité
                   </Link>
                 </label>
               </div>
-              <Button type="submit" className="w-full rounded-full">
-                {t("createAccount")}
+              <Button type="submit" className="w-full rounded-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Inscription en cours...
+                  </>
+                ) : (
+                  "S'inscrire"
+                )}
               </Button>
             </form>
 
@@ -136,7 +173,7 @@ export default function SignupPage() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">{t("orContinueWith")}</span>
+                <span className="bg-background px-2 text-muted-foreground">Ou continuer avec</span>
               </div>
             </div>
 
@@ -160,20 +197,20 @@ export default function SignupPage() {
                     fill="#EA4335"
                   />
                 </svg>
-                {t("google")}
+                Google
               </Button>
               <Button variant="outline" className="rounded-full bg-transparent">
                 <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                 </svg>
-                {t("github")}
+                GitHub
               </Button>
             </div>
 
             <p className="text-center text-sm text-muted-foreground mt-6">
-              {t("alreadyHaveAccount")}{" "}
+              Déjà un compte ?{" "}
               <Link href="/login" className="text-primary hover:underline font-medium">
-                {t("login")}
+                Se connecter
               </Link>
             </p>
           </CardContent>
