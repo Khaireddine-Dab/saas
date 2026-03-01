@@ -7,7 +7,7 @@ export const translations = {
     login: "Log in",
     pricing: "Pricing",
     signUp: "Sign Up",
-
+    getStarted: "Get Started",
 
     // Hero Section
     badge: "AI Technology",
@@ -95,7 +95,7 @@ export const translations = {
     termsOfService: "Terms of Service",
     cookiePolicy: "Cookie Policy",
     allRightsReserved: "All rights reserved.",
-    // Pricing Section
+        // Pricing Section
     pricingTitle: "Simple, Transparent Pricing",
     pricingDescription: "Choose the plan that's right for your business. No hidden fees, cancel anytime.",
     monthly: "Monthly",
@@ -157,7 +157,7 @@ export const translations = {
     google: "Google",
     github: "GitHub",
     //sidebar Navigation
-    dashboard: "Verification Stores",
+    dashboard: "Dashboard",
     analytics: "Analytics",
     users: "Users",
     billing: "Billing",
@@ -207,7 +207,7 @@ export const translations = {
     generalSettings: "General Settings",
     accountSettings: "Account Settings",
     apiKeys: "API Keys",
-    integrationsSettings: "Integrations",
+    integrations: "Integrations",
     preferences: "Preferences",
     language: "Language",
     timezone: "Timezone",
@@ -227,6 +227,7 @@ export const translations = {
     login: "تسجيل الدخول",
     pricing: "الأسعار",
     signUp: "إنشاء حساب",
+    getStarted: "ابدأ الآن",
 
     // Hero Section
     badge: "تقنية بالذكاء الاصطناعي",
@@ -369,7 +370,7 @@ export const translations = {
     google: "جوجل",
     github: "جيت هاب",
     // Sidebar Navigation
-    dashboard: "التحقق من المتاجر",
+    dashboard: "لوحة التحكم",
     analytics: "التحليلات",
     users: "المستخدمون",
     billing: "الفواتير",
@@ -416,7 +417,7 @@ export const translations = {
     generalSettings: "الإعدادات العامة",
     accountSettings: "إعدادات الحساب",
     apiKeys: "مفاتيح API",
-    integrationsSettings: "التكاملات",
+    integrations: "التكاملات",
     preferences: "التفضيلات",
     language: "اللغة",
     timezone: "المنطقة الزمنية",
@@ -433,9 +434,9 @@ export const translations = {
     testimonials: "Témoignages",
     faq: "FAQ",
     login: "Se connecter",
-    getStarted: "Commencer",
     pricing: "Tarifs",
     signUp: "S'inscrire",
+    getStarted: "Commencer",
 
     // Hero Section
     badge: "Technologie IA",
@@ -582,8 +583,8 @@ export const translations = {
     orContinueWith: "Ou continuer avec",
     google: "Google",
     github: "GitHub",
-    // Sidebar Navigation
-    dashboard: "Vérification Stores",
+     // Sidebar Navigation
+    dashboard: "Tableau de Bord",
     analytics: "Analytiques",
     users: "Utilisateurs",
     billing: "Facturation",
@@ -630,7 +631,7 @@ export const translations = {
     generalSettings: "Paramètres Généraux",
     accountSettings: "Paramètres du Compte",
     apiKeys: "Clés API",
-    integrationsSettings: "Intégrations",
+    integrations: "Intégrations",
     preferences: "Préférences",
     language: "Langue",
     timezone: "Fuseau Horaire",

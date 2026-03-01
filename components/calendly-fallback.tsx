@@ -29,7 +29,7 @@ export function CalendlyFallback({ onClose }: CalendlyFallbackProps) {
         <div>
           <h3 className="text-xl font-semibold mb-2">Let's Schedule Your Demo</h3>
           <p className="text-muted-foreground">
-            Book a personalized 30-minute demo with our AI experts to see how talkBridge can transform your business.
+            Book a personalized 30-minute demo with our AI experts to see how EchoRift can transform your business.
           </p>
         </div>
       </div>
@@ -67,8 +67,8 @@ export function CalendlyFallback({ onClose }: CalendlyFallbackProps) {
         <div className="text-center text-sm text-muted-foreground space-y-2">
           <p>Or contact us directly:</p>
           <div className="space-y-1">
-            <p>📧 talkBridge.ai@gmail.com</p>
-            <p>📞 +216 50704630</p>
+            <p>📧 echorift.ai@gmail.com</p>
+            <p>📞 +91 9622523921</p>
           </div>
         </div>
       </div>

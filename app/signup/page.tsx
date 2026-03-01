@@ -1,66 +1,71 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { AnimatedLogo } from "@/components/animated-logo"
-import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
-import { authApi } from "@/lib/api"
+import { useLanguage } from "@/contexts/language-context"
+import { AlertCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+
 
 export default function SignupPage() {
-  const router = useRouter()
+  const [fullName, setFullName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    terms: false
-  })
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target
-    setFormData(prev => ({ ...prev, [id]: value }))
-  }
-
-  const handleCheckboxChange = (checked: boolean) => {
-    setFormData(prev => ({ ...prev, terms: checked }))
-  }
+  const [message, setMessage] = useState("")
+  const { t } = useLanguage()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas")
-      return
-    }
-
-    if (!formData.terms) {
-      toast.error("Veuillez accepter les conditions d'utilisation")
-      return
-    }
-
     setIsLoading(true)
+    setMessage("")
 
     try {
-      await authApi.signup({
-        email: formData.email,
-        password: formData.password,
-        full_name: formData.fullName,
-      })
+      // Basic validation
+      if (!fullName.trim()) {
+        setMessage("Please enter your full name")
+        return
+      }
+      if (!email.trim()) {
+        setMessage("Please enter your email address")
+        return
+      }
 
-      toast.success("Compte créé avec succès ! Veuillez vous connecter.")
-      router.push("/login")
+      if (password !== confirmPassword) {
+        setMessage("Passwords don't match!")
+        return
+      }
+      if (!agreedToTerms) {
+        setMessage("Please agree to the terms and privacy policy")
+        return
+      }
 
-    } catch (error: any) {
-      toast.error(error.message)
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Success message
+      setMessage("Account created successfully! Redirecting to dashboard...")
+      
+      // Log the signup data
+      console.log("Signup:", { fullName, email, password })
+      
+      // Here you would typically redirect to dashboard or login page
+      // window.location.href = "/dashboard"
+      
+    } catch (error) {
+      setMessage("An error occurred. Please try again.")
+      console.error("Signup error:", error)
     } finally {
       setIsLoading(false)
     }
@@ -77,95 +82,131 @@ export default function SignupPage() {
         className="w-full max-w-md"
       >
         <div className="flex justify-center mb-8">
+        {/* Logo */}
+
           <Link href="/">
-            <AnimatedLogo
-              size={48}
-              animationType="bounce"
-              textClassName="text-3xl"
-              className="hover:scale-105 transition-transform duration-300"
-            />
+                  <div className="flex items-center gap-2 font-bold">
+                    <div className="size-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center overflow-hidden">
+                      <Image
+                        src="/logo.png"
+                        alt="talkBridge Logo"
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 object-contain"
+                      />
+                    </div>
+                     <span>talkBridge</span>
+                  </div>
           </Link>
         </div>
 
         <Card className="border-border/40 bg-background/95 backdrop-blur">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Créer un compte</CardTitle>
-            <CardDescription className="text-center">Inscrivez-vous pour commencer votre aventure</CardDescription>
+            <CardTitle className="text-2xl font-bold text-center">{t("createAccount")}</CardTitle>
+            <CardDescription className="text-center">{t("signupDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Nom complet</Label>
+                <Label htmlFor="fullName">{t("fullName")}</Label>
                 <Input
                   id="fullName"
                   type="text"
-                  placeholder="Jean Dupont"
-                  value={formData.fullName}
-                  onChange={handleChange}
+                  placeholder="John Doe"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Adresse e-mail</Label>
+                <Label htmlFor="email">{t("emailAddress")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="nom@exemple.com"
-                  value={formData.email}
-                  onChange={handleChange}
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Mot de passe</Label>
+                <Label htmlFor="password">{t("password")}
+       <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger  className="inline-block ml-2 align-middle">
+            <AlertCircle className="h-4 w-4 text-yellow-500 cursor-pointer" />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-sm">Password is optional. You can use Magic Link to log in (more secure) .</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+                </Label>
+
                 <Input
                   id="password"
                   type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  
+                  
                 />
+
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  
                 />
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="terms"
-                  checked={formData.terms}
-                  onCheckedChange={handleCheckboxChange}
+                  checked={agreedToTerms}
+                  onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
                 />
                 <label
                   htmlFor="terms"
                   className="text-sm text-muted-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  J'accepte les{" "}
+                  {t("agreeToTerms")}{" "}
                   <Link href="#" className="text-primary hover:underline">
-                    Conditions d'utilisation
+                    {t("termsOfService")}
                   </Link>{" "}
-                  et la{" "}
+                  {t("and")}{" "}
                   <Link href="#" className="text-primary hover:underline">
-                    Politique de confidentialité
+                    {t("privacyPolicy")}
                   </Link>
                 </label>
               </div>
-              <Button type="submit" className="w-full rounded-full" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                className="w-full rounded-full" 
+                disabled={isLoading}
+              >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Inscription en cours...
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                    Creating Account...
                   </>
                 ) : (
-                  "S'inscrire"
+                  t("createAccount")
                 )}
               </Button>
+              
+              {message && (
+                <div className={`text-sm text-center p-3 rounded-md ${
+                  message.includes("successfully") 
+                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
+                    : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                }`}>
+                  {message}
+                </div>
+              )}
             </form>
 
             <div className="relative my-6">
@@ -173,12 +214,19 @@ export default function SignupPage() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Ou continuer avec</span>
+                <span className="bg-background px-2 text-muted-foreground">{t("orContinueWith")}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="rounded-full bg-transparent">
+              <Button 
+                variant="outline" 
+                className="rounded-full bg-transparent"
+                onClick={() => {
+                  console.log("Google signup clicked")
+                  setMessage("Google signup coming soon!")
+                }}
+              >
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                   <path
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -197,20 +245,27 @@ export default function SignupPage() {
                     fill="#EA4335"
                   />
                 </svg>
-                Google
+                {t("google")}
               </Button>
-              <Button variant="outline" className="rounded-full bg-transparent">
+              <Button 
+                variant="outline" 
+                className="rounded-full bg-transparent"
+                onClick={() => {
+                  console.log("GitHub signup clicked")
+                  setMessage("GitHub signup coming soon!")
+                }}
+              >
                 <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                 </svg>
-                GitHub
+                {t("github")}
               </Button>
             </div>
 
             <p className="text-center text-sm text-muted-foreground mt-6">
-              Déjà un compte ?{" "}
+              {t("alreadyHaveAccount")}{" "}
               <Link href="/login" className="text-primary hover:underline font-medium">
-                Se connecter
+                {t("login")}
               </Link>
             </p>
           </CardContent>

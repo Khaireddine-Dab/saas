@@ -12,9 +12,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useTheme } from "next-themes"
 import { CalendlyModal } from "@/components/calendly-modal"
 import { useLanguage } from "@/contexts/language-context"
-import { AnimatedLogo } from "@/components/animated-logo"
-import { BackendStatus } from "@/components/backend-status"
+
 import { LanguageSelector } from "@/components/language-selector"
+import { PricingSection } from "@/components/pricing-section"
+import { DashboardLayout } from "@/components/dashboard/layout"
+import { HomePage } from "@/components/dashboard/pages/home"
 
 export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -93,16 +95,25 @@ export default function LandingPage() {
   ]
 
   return (
+
     <div className="flex min-h-[100dvh] flex-col">
       <header
         className={`sticky top-0 z-50 w-full backdrop-blur-lg transition-all duration-300 ${isScrolled ? "bg-background/80 shadow-sm" : "bg-transparent"}`}
       >
         <div className="container flex h-16 items-center justify-between">
-          <AnimatedLogo 
-            size={42} 
-            animationType="rotate"
-            className="hover:scale-105 transition-transform duration-300"
-          />
+{/* logo */}
+          <div className="flex items-center gap-2 font-bold">
+            <div className="size-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center overflow-hidden">
+              <Image
+                src="/logo.png"
+                alt="talkBridge Logo"
+                width={32}
+                height={32}
+                className="w-8 h-8 object-contain"
+              />
+            </div>
+             <span>talkBridge</span>
+          </div>
           <nav className="hidden md:flex gap-8">
             <Link
               href="#features"
@@ -130,6 +141,7 @@ export default function LandingPage() {
             </Link>
           </nav>
           <div className="hidden md:flex gap-4 items-center">
+            
             <LanguageSelector />
             <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full">
               {mounted && theme === "dark" ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
@@ -141,14 +153,10 @@ export default function LandingPage() {
             >
               {t("login")}
             </Link>
-            <Link
-              href="/signup"
-              className="text-sm font-medium text-primary hover:text-primary/80"
-            >
-              {t("signUp")}
-            </Link>
+
           </div>
           <div className="flex items-center gap-4 md:hidden">
+            
             <LanguageSelector />
             <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full">
               {mounted && theme === "dark" ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
@@ -184,9 +192,6 @@ export default function LandingPage() {
                 <Link href="/login" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
                   {t("login")}
                 </Link>
-                <Link href="/signup" className="py-2 text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>
-                  {t("signUp")}
-                </Link>
                 <Button
                   className="rounded-full"
                   onClick={() => {
@@ -205,54 +210,69 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="w-full py-20 md:py-32 lg:py-40 overflow-hidden">
-          <div className="container px-4 md:px-6 relative">
+          <div className="w-90 text-center container px-4 md:px-6 relative ">
             <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-black bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1f1f1f_1px,transparent_1px),linear-gradient(to_bottom,#1f1f1f_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="text-center max-w-3xl mx-auto mb-12"
+                            className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12"
             >
+                            {/* Left side - Text content */}
+                            <div className="flex-1 text-center lg:text-left">
               <Badge className="mb-4 rounded-full px-4 py-1.5 text-sm font-medium" variant="secondary">
                 {t("badge")}
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
                 {t("heroTitle")}
               </h1>
-              <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">{t("heroDescription")}</p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <p className="text-lg md:text-xl text-muted-foreground mb-8">{t("heroDescription")}</p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button size="lg" className="rounded-full h-12 px-8 text-base" onClick={openCalendlyDirect}>
                   {t("bookDemo")}
                   <ExternalLink className="ml-2 size-4" />
                 </Button>
               </div>
-              <div className="flex items-center justify-center gap-4 mt-6 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Check className="size-4 text-primary" />
+              <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4 mt-6 text-sm text-muted-foreground justify-center lg:justify-start">                <div className="flex items-center gap-1">
+                  <Check className="size-4 text-success" />
                   <span>{t("noSetupFees")}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Check className="size-4 text-primary" />
+                  <Check className="size-4 text-success" />
                   <span>{t("hourSetup")}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Check className="size-4 text-primary" />
+                  <Check className="size-4 text-success" />
                   <span>{t("cancelAnytime")}</span>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="relative mx-auto max-w-5xl"
-            >
-              <div className="rounded-xl overflow-hidden shadow-2xl border border-border/40 bg-gradient-to-b from-background to-muted/20"></div>
-              <div className="absolute -bottom-6 -right-6 -z-10 h-[300px] w-[300px] rounded-full bg-gradient-to-br from-primary/30 to-secondary/30 blur-3xl opacity-70"></div>
-              <div className="absolute -top-6 -left-6 -z-10 h-[300px] w-[300px] rounded-full bg-gradient-to-br from-secondary/30 to-primary/30 blur-3xl opacity-70"></div>
+  initial={{ opacity: 0, y: 40 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.7, delay: 0.2 }}
+  className="flex-1 relative w-full"
+>
+  <div className="rounded-xl overflow-hidden shadow-2xl border border-border/40 bg-gradient-to-b from-background to-muted/20 h-64 md:h-80 lg:h-96">
+    <video
+    src="/démo-video.mp4"
+      className="w-full h-full object-cover"
+      controls
+      autoPlay
+      muted
+      loop
+      playsInline
+      poster="/video-poster.jpg"
+>
+    </video>
+  </div>
+  <div className="absolute -bottom-6 -right-6 -z-10 h-[300px] w-[300px] rounded-full bg-gradient-to-br from-primary/30 to-secondary/30 blur-3xl opacity-70"></div>
+  <div className="absolute -top-6 -left-6 -z-10 h-[300px] w-[300px] rounded-full bg-gradient-to-br from-secondary/30 to-primary/30 blur-3xl opacity-70"></div>
+</motion.div>
             </motion.div>
+
           </div>
         </section>
 
@@ -298,163 +318,7 @@ export default function LandingPage() {
         </section>
 
         {/* Pricing Section */}
-        <section id="pricing" className="w-full py-20 md:py-32 bg-muted/30">
-          <div className="container px-4 md:px-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="flex flex-col items-center justify-center space-y-4 text-center mb-12"
-            >
-              <Badge className="rounded-full px-4 py-1.5 text-sm font-medium" variant="secondary">
-                {t("pricing")}
-              </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight">{t("pricingTitle")}</h2>
-              <p className="max-w-[800px] text-muted-foreground md:text-lg">{t("pricingDescription")}</p>
-            </motion.div>
-
-            <div className="grid gap-8 md:grid-cols-3 max-w-6xl mx-auto">
-              {/* Starter Plan */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-              >
-                <Card className="h-full overflow-hidden border-border/40 bg-gradient-to-b from-background to-muted/10 backdrop-blur transition-all hover:shadow-lg">
-                  <CardContent className="p-8 flex flex-col h-full">
-                    <h3 className="text-2xl font-bold mb-2">{t("starterPlan")}</h3>
-                    <p className="text-muted-foreground mb-6">{t("starterDescription")}</p>
-                    <div className="mb-6">
-                      <span className="text-4xl font-bold">{t("starterPrice")}</span>
-                      <span className="text-muted-foreground">{t("perMonth")}</span>
-                    </div>
-                    <Button className="w-full rounded-full mb-6">{t("choosePlan")}</Button>
-                    <ul className="space-y-3 flex-grow">
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("starterFeature1")}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("starterFeature2")}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("starterFeature3")}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("starterFeature4")}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("starterFeature5")}</span>
-                      </li>
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Professional Plan */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                <Card className="h-full overflow-hidden border-primary/50 bg-gradient-to-b from-background to-primary/5 backdrop-blur transition-all hover:shadow-xl relative">
-                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
-                    {t("mostPopular")}
-                  </div>
-                  <CardContent className="p-8 flex flex-col h-full">
-                    <h3 className="text-2xl font-bold mb-2">{t("professionalPlan")}</h3>
-                    <p className="text-muted-foreground mb-6">{t("professionalDescription")}</p>
-                    <div className="mb-6">
-                      <span className="text-4xl font-bold">{t("professionalPrice")}</span>
-                      <span className="text-muted-foreground">{t("perMonth")}</span>
-                    </div>
-                    <Button className="w-full rounded-full mb-6">{t("choosePlan")}</Button>
-                    <ul className="space-y-3 flex-grow">
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("professionalFeature1")}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("professionalFeature2")}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("professionalFeature3")}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("professionalFeature4")}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("professionalFeature5")}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("professionalFeature6")}</span>
-                      </li>
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Enterprise Plan */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <Card className="h-full overflow-hidden border-border/40 bg-gradient-to-b from-background to-muted/10 backdrop-blur transition-all hover:shadow-lg">
-                  <CardContent className="p-8 flex flex-col h-full">
-                    <h3 className="text-2xl font-bold mb-2">{t("enterprisePlan")}</h3>
-                    <p className="text-muted-foreground mb-6">{t("enterpriseDescription")}</p>
-                    <div className="mb-6">
-                      <span className="text-4xl font-bold">{t("enterprisePrice")}</span>
-                    </div>
-                    <Button variant="outline" className="w-full rounded-full mb-6 bg-transparent">
-                      {t("contactSales")}
-                    </Button>
-                    <ul className="space-y-3 flex-grow">
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("enterpriseFeature1")}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("enterpriseFeature2")}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("enterpriseFeature3")}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("enterpriseFeature4")}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("enterpriseFeature5")}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Check className="size-5 text-primary shrink-0 mt-0.5" />
-                        <span className="text-sm">{t("enterpriseFeature6")}</span>
-                      </li>
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
-          </div>
-        </section>
+        <PricingSection/>
 
         {/* How It Works Section */}
         <section className="w-full py-20 md:py-32 bg-muted/30 relative overflow-hidden">
@@ -880,5 +744,8 @@ export default function LandingPage() {
       {/* Calendly Modal - Keep as backup option */}
       <CalendlyModal isOpen={calendlyModalOpen} onClose={closeCalendlyModal} />
     </div>
-  )
+
+      
+  
+)
 }
