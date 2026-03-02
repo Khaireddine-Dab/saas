@@ -8,12 +8,11 @@ import { LanguageProvider } from "@/contexts/language-context"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "talkBridge - AI Agents That Work Like Humans",
+  title: "EchoRift - AI Voice Agents That Work Like Humans",
   description:
-    "AI-powered agents that handle calls, book appointments, and answer questions 24/7. Go live in under 24 hours.",
+    "AI-powered voice agents that handle calls, book appointments, and answer questions 24/7. Go live in under 24 hours.",
+    generator: 'v0.app'
 }
-
-import { Toaster } from "sonner"
 
 export default function RootLayout({
   children,
@@ -27,10 +26,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <LanguageProvider>
-            {children}
-            <Toaster position="top-right" richColors />
-          </LanguageProvider>
+          <LanguageProvider>{children}</LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

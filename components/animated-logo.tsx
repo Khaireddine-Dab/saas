@@ -19,7 +19,8 @@ export function AnimatedLogo({
   animationType = "rotate"
 }: AnimatedLogoProps) {
   
-  const getAnimation = () => {
+  // This function is now only used for the text animation
+  const getTextAnimation = () => {
     switch (animationType) {
       case "rotate":
         return {
@@ -51,7 +52,7 @@ export function AnimatedLogo({
       case "glow":
         return {
           animate: { 
-            boxShadow: [
+            textShadow: [
               "0 0 5px rgba(59, 130, 246, 0.5)",
               "0 0 20px rgba(59, 130, 246, 0.8)",
               "0 0 5px rgba(59, 130, 246, 0.5)"
@@ -70,10 +71,10 @@ export function AnimatedLogo({
 
   return (
     <div className={`flex items-center gap-2 font-bold ${className}`}>
-      <motion.div
+      {/* Logo container - completely static, no animation */}
+      <div
         className={`rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden`}
         style={{ width: size, height: size }}
-        {...getAnimation()}
       >
         <Image
           src="/logo.png"
@@ -82,7 +83,8 @@ export function AnimatedLogo({
           height={size - 2}
           className="object-contain"
         />
-      </motion.div>
+      </div>
+      
       {showText && (
         <motion.span 
           className={textClassName}
@@ -95,14 +97,7 @@ export function AnimatedLogo({
           }}
         >
           <motion.span
-            animate={{ 
-              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
-            }}
-            transition={{ 
-              duration: 3,
-              repeat: Infinity,
-              ease: "linear"
-            }}
+            {...getTextAnimation()}
             className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-[length:200%_100%] bg-clip-text text-transparent"
           >
             talkBridge

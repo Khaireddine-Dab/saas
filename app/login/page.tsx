@@ -1,55 +1,72 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { AnimatedLogo } from "@/components/animated-logo"
-import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
-import { authApi } from "@/lib/api"
+import type React from "react";
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    email: "",
-    password: ""
-  })
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target
-    setFormData(prev => ({ ...prev, [id]: value }))
-  }
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [useMagicLink, setUseMagicLink] = useState(true);
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
 
     try {
-      const data = await authApi.login({
-        email: formData.email,
-        password: formData.password,
-      })
+      if (!email.trim()) {
+        setMessage("Please enter your email address");
+        return;
+      }
 
-      // Stocker le token et les infos utilisateur
-      localStorage.setItem("access_token", data.tokens.access)
-      localStorage.setItem("refresh_token", data.tokens.refresh)
-      localStorage.setItem("user", JSON.stringify(data.user))
-
-      toast.success(`Bienvenue, ${data.user.full_name || data.user.email} !`)
-      router.push("/dashboard")
-
-    } catch (error: any) {
-      toast.error(error.message)
+      if (useMagicLink) {
+        // Magic link mode
+        const res = await fetch("http://localhost:8000/auth/magic-link", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        setMessage(data.message || "Check your email for the login link!");
+      } else {
+        // Password login mode (for fallback)
+        if (!password.trim()) {
+          setMessage("Please enter your password");
+          return;
+        }
+        if (password.length < 6) {
+          setMessage("Password must be at least 6 characters long");
+          return;
+        }
+        // Simulate login success
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setMessage("Login successful! Redirecting...");
+        console.log("Login:", { email, password });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setMessage("Something went wrong. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
@@ -61,73 +78,134 @@ export default function LoginPage() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
+        {/* Logo */}
         <div className="flex justify-center mb-8">
+
           <Link href="/">
-            <AnimatedLogo
-              size={48}
-              animationType="pulse"
-              textClassName="text-3xl"
-              className="hover:scale-105 transition-transform duration-300"
-            />
+                    <div className="flex items-center gap-2 font-bold">
+                      <div className="size-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center overflow-hidden">
+                        <Image
+                          src="/logo.png"
+                          alt="talkBridge Logo"
+                          width={32}
+                          height={32}
+                          className="w-8 h-8 object-contain"
+                        />
+                      </div>
+                       <span>talkBridge</span>
+                    </div>
           </Link>
         </div>
 
         <Card className="border-border/40 bg-background/95 backdrop-blur">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Bon retour !</CardTitle>
-            <CardDescription className="text-center">Connectez-vous à votre compte</CardDescription>
+            <CardTitle className="text-2xl font-bold text-center">
+              {useMagicLink ? "Login via Magic Link" : t("welcomeBack")}
+            </CardTitle>
+            <CardDescription className="text-center">
+              {useMagicLink
+                ? "Enter your email and we’ll send you a secure login link."
+                : t("loginDescription")}
+            </CardDescription>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Email field */}
               <div className="space-y-2">
-                <Label htmlFor="email">Adresse e-mail</Label>
+                <Label htmlFor="email">{t("emailAddress")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="nom@exemple.com"
-                  value={formData.email}
-                  onChange={handleChange}
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Mot de passe</Label>
-                  <Link href="#" className="text-sm text-primary hover:underline">
-                    Mot de passe oublié ?
-                  </Link>
+
+              {/* Password field (only when not using magic link) */}
+              {!useMagicLink && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">{t("password")}</Label>
+                    <Link
+                      href="#"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      {t("forgotPassword")}
+                    </Link>
+                  </div>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full rounded-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Connexion...
-                  </>
-                ) : (
-                  "Se connecter"
-                )}
+              )}
+
+              {/* Submit button */}
+              <Button
+                type="submit"
+                className="w-full rounded-full"
+                disabled={isLoading}
+              >
+                {isLoading
+                  ? "Processing..."
+                  : useMagicLink
+                  ? "Send Magic Link"
+                  : t("login")}
               </Button>
+
+              {/* Toggle between Magic Link / Password mode */}
+              <button
+                type="button"
+                onClick={() => setUseMagicLink(!useMagicLink)}
+                className="w-full text-sm text-primary hover:underline mt-2"
+              >
+                {useMagicLink
+                  ? "Use password instead"
+                  : "Use Magic Link instead"}
+              </button>
+
+              {/* Message */}
+              {message && (
+                <div
+                  className={`text-sm text-center p-3 rounded-md ${
+                    message.toLowerCase().includes("success")
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                      : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                  }`}
+                >
+                  {message}
+                </div>
+              )}
             </form>
 
+            {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Ou continuer avec</span>
+                <span className="bg-background px-2 text-muted-foreground">
+                  {t("orContinueWith")}
+                </span>
               </div>
             </div>
 
+            {/* OAuth Buttons (Google / GitHub) */}
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="rounded-full bg-transparent">
+              <Button
+                variant="outline"
+                className="rounded-full bg-transparent"
+                onClick={() => {
+                  console.log("Google login clicked");
+                  setMessage("Google login coming soon!");
+                }}
+              >
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                   <path
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -146,25 +224,39 @@ export default function LoginPage() {
                     fill="#EA4335"
                   />
                 </svg>
-                Google
+                {t("google")}
               </Button>
-              <Button variant="outline" className="rounded-full bg-transparent">
-                <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+              <Button
+                variant="outline"
+                className="rounded-full bg-transparent"
+                onClick={() => {
+                  console.log("GitHub login clicked");
+                  setMessage("GitHub login coming soon!");
+                }}
+              >
+                <svg
+                  className="mr-2 h-4 w-4"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                 </svg>
-                GitHub
+                {t("github")}
               </Button>
             </div>
 
             <p className="text-center text-sm text-muted-foreground mt-6">
-              Vous n'avez pas de compte ?{" "}
-              <Link href="/signup" className="text-primary hover:underline font-medium">
-                S'inscrire
+              {t("dontHaveAccount")}{" "}
+              <Link
+                href="/signup"
+                className="text-primary hover:underline font-medium"
+              >
+                {t("signUp")}
               </Link>
             </p>
           </CardContent>
         </Card>
       </motion.div>
     </div>
-  )
+  );
 }

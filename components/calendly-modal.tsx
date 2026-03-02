@@ -115,8 +115,8 @@ export function CalendlyModal({ isOpen, onClose }: CalendlyModalProps) {
               </div>
               <div className="text-sm text-muted-foreground space-y-1 pt-4 border-t">
                 <p>Or contact us directly:</p>
-                <p>📧 talkBridge.ai@gmail.com</p>
-                <p>📞 +216 50704630</p>
+                <p>📧 echorift.ai@gmail.com</p>
+                <p>📞 +91 9622523921</p>
               </div>
             </div>
           )}
