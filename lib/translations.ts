@@ -7,11 +7,11 @@ export const translations = {
     login: "Log in",
     pricing: "Pricing",
     signUp: "Sign Up",
-    getStarted: "Get Started",
+
 
     // Hero Section
     badge: "AI Technology",
-    heroTitle: "AI Agents That Work Like Humans – Only Smarter.",
+    heroTitle: "MANAGING BUSINESS HASE NEVER BEEN EASIER.",
     heroDescription:
       "talkBridge gives your business an AI-powered voice agent that handles calls, books appointments, answers questions, and never misses a beat.",
     bookDemo: "Book a Demo",
@@ -95,7 +95,7 @@ export const translations = {
     termsOfService: "Terms of Service",
     cookiePolicy: "Cookie Policy",
     allRightsReserved: "All rights reserved.",
-        // Pricing Section
+    // Pricing Section
     pricingTitle: "Simple, Transparent Pricing",
     pricingDescription: "Choose the plan that's right for your business. No hidden fees, cancel anytime.",
     monthly: "Monthly",
@@ -109,7 +109,7 @@ export const translations = {
     // Starter Plan
     starterPlan: "Starter",
     starterDescription: "Perfect for small businesses getting started",
-    starterPrice: "$99",
+    starterPrice: "$",
     starterFeature1: " Up to 2000 chats/month,500 calls/month",
     starterFeature2: "Basic CRM integration",
     starterFeature3: "Email support",
@@ -119,7 +119,7 @@ export const translations = {
     // Professional Plan
     professionalPlan: "Professional",
     professionalDescription: "For growing businesses with higher volume",
-    professionalPrice: "$299",
+    professionalPrice: "$",
     professionalFeature1: " Unlimited chats,up to 2,000 calls/month",
     professionalFeature2: "Advanced CRM integration",
     professionalFeature3: "Priority support",
@@ -157,7 +157,7 @@ export const translations = {
     google: "Google",
     github: "GitHub",
     //sidebar Navigation
-    dashboard: "Dashboard",
+    dashboard: "Verification Stores",
     analytics: "Analytics",
     users: "Users",
     billing: "Billing",
@@ -207,7 +207,7 @@ export const translations = {
     generalSettings: "General Settings",
     accountSettings: "Account Settings",
     apiKeys: "API Keys",
-    integrations: "Integrations",
+    integrationsSettings: "Integrations",
     preferences: "Preferences",
     language: "Language",
     timezone: "Timezone",
@@ -227,11 +227,10 @@ export const translations = {
     login: "تسجيل الدخول",
     pricing: "الأسعار",
     signUp: "إنشاء حساب",
-    getStarted: "ابدأ الآن",
 
     // Hero Section
     badge: "تقنية بالذكاء الاصطناعي",
-    heroTitle: "وكلاء بالذكاء الاصطناعي يعملون مثل البشر - لكن أذكى.",
+    heroTitle: " إدارة المشاريع لم تكن أسهل من أي وقت مضى .",
     heroDescription:
       "يمنح talkBridge عملك وكيلاً صوتياً مدعوماً بالذكاء الاصطناعي يتعامل مع المكالمات ويحجز المواعيد ويجيب على الأسئلة ولا يفوت أي فرصة.",
     bookDemo: "احجز عرضاً توضيحياً",
@@ -325,7 +324,7 @@ export const translations = {
 
     starterPlan: "المبتدئ",
     starterDescription: "مثالي للشركات الصغيرة التي تبدأ",
-    starterPrice: "$99",
+    starterPrice: "$",
     starterFeature1: "حتى 2000 محادثة/شهر، 500 مكالمة/شهر",
     starterFeature2: "تكامل CRM أساسي",
     starterFeature3: "دعم البريد الإلكتروني",
@@ -334,7 +333,7 @@ export const translations = {
 
     professionalPlan: "المحترف",
     professionalDescription: "للشركات المتنامية ذات الحجم الأعلى",
-    professionalPrice: "$299",
+    professionalPrice: "$",
     professionalFeature1: "حتى 2000 مكالمة/شهر، محادثات بلا حدود",
     professionalFeature2: "تكامل CRM متقدم",
     professionalFeature3: "دعم ذو أولوية",
@@ -370,7 +369,7 @@ export const translations = {
     google: "جوجل",
     github: "جيت هاب",
     // Sidebar Navigation
-    dashboard: "لوحة التحكم",
+    dashboard: "التحقق من المتاجر",
     analytics: "التحليلات",
     users: "المستخدمون",
     billing: "الفواتير",
@@ -417,7 +416,7 @@ export const translations = {
     generalSettings: "الإعدادات العامة",
     accountSettings: "إعدادات الحساب",
     apiKeys: "مفاتيح API",
-    integrations: "التكاملات",
+    integrationsSettings: "التكاملات",
     preferences: "التفضيلات",
     language: "اللغة",
     timezone: "المنطقة الزمنية",
@@ -434,13 +433,13 @@ export const translations = {
     testimonials: "Témoignages",
     faq: "FAQ",
     login: "Se connecter",
+    getStarted: "Commencer",
     pricing: "Tarifs",
     signUp: "S'inscrire",
-    getStarted: "Commencer",
 
     // Hero Section
     badge: "Technologie IA",
-    heroTitle: "Des Agents IA Qui Travaillent Comme Des Humains – En Plus Intelligent.",
+    heroTitle: "Gérer une entreprise n'a jamais été aussi facile.",
     heroDescription:
       "talkBridge offre à votre entreprise un agent vocal alimenté par l'IA qui gère les appels, prend des rendez-vous, répond aux questions et ne manque jamais rien.",
     bookDemo: "Réserver une Démo",
@@ -539,7 +538,7 @@ export const translations = {
 
     starterPlan: "Débutant",
     starterDescription: "Parfait pour les petites entreprises qui démarrent",
-    starterPrice: "$99",
+    starterPrice: "$",
     starterFeature1: "Jusqu'à 2000 messages,500 appels/mois",
     starterFeature2: "Intégration CRM de base",
     starterFeature3: "Support par email",
@@ -548,7 +547,7 @@ export const translations = {
 
     professionalPlan: "Professionnel",
     professionalDescription: "Pour les entreprises en croissance avec un volume plus élevé",
-    professionalPrice: "$299",
+    professionalPrice: "$",
     professionalFeature1: "Chat illimité et jusqu'à 2 000 appels/mois",
     professionalFeature2: "Intégration CRM avancée",
     professionalFeature3: "Support prioritaire",
@@ -583,8 +582,8 @@ export const translations = {
     orContinueWith: "Ou continuer avec",
     google: "Google",
     github: "GitHub",
-     // Sidebar Navigation
-    dashboard: "Tableau de Bord",
+    // Sidebar Navigation
+    dashboard: "Vérification Stores",
     analytics: "Analytiques",
     users: "Utilisateurs",
     billing: "Facturation",
@@ -631,7 +630,7 @@ export const translations = {
     generalSettings: "Paramètres Généraux",
     accountSettings: "Paramètres du Compte",
     apiKeys: "Clés API",
-    integrations: "Intégrations",
+    integrationsSettings: "Intégrations",
     preferences: "Préférences",
     language: "Langue",
     timezone: "Fuseau Horaire",
