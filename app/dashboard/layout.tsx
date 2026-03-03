@@ -1,28 +1,32 @@
-import type React from "react"
-import { DashboardSidebar } from "@/components/dashboard-sidebar"
-import { DashboardHeader } from "@/components/dashboard-header"
+import React from 'react';
+import { DashboardHeader } from '@/components/dashboard/header';
+import { SidebarNav } from '@/components/dashboard/sidebar-nav';
 
-import { AuthGuard } from "@/components/auth-guard"
+export const metadata = {
+  title: 'Dashboard | Ro2ya Admin Panel',
+  description: 'Enterprise admin panel for Ro2ya marketplace',
+};
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-    <AuthGuard>
-      <div className="flex h-screen overflow-hidden">
-        {/* Desktop Sidebar */}
-        <aside className="hidden md:block">
-          <DashboardSidebar />
-        </aside>
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <SidebarNav />
 
-        {/* Main Content */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <DashboardHeader />
-          <main className="flex-1 overflow-y-auto bg-muted/40 p-6">{children}</main>
-        </div>
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden ml-64 sm:ml-64">
+        {/* Header */}
+        <DashboardHeader />
+
+        {/* Content */}
+        <main className="flex-1 overflow-auto">
+          <div className="p-6">{children}</div>
+        </main>
       </div>
-    </AuthGuard>
-  )
+    </div>
+  );
 }

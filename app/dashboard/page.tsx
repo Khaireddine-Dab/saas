@@ -1,171 +1,247 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
-import { Check, X, Store, User, Mail, Hash, Loader2 } from "lucide-react"
-import { storesApi } from "@/lib/api"
-import { motion, AnimatePresence } from "framer-motion"
+import React from 'react';
+import { KPICard } from '@/components/dashboard/kpi-card';
+import { ChartCard } from '@/components/dashboard/chart-card';
+import { RecentActivity } from '@/components/dashboard/recent-activity';
+import { mockKPIs, mockAnalyticsMetrics } from '@/lib/mock-data';
+import {
+  Users,
+  Briefcase,
+  Package,
+  Search,
+  TrendingUp,
+  Activity,
+  AlertCircle,
+  CheckCircle2,
+} from 'lucide-react';
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
+import { ChartContainer, ChartTooltip, ChartLegend } from '@/components/ui/chart';
 
 export default function DashboardPage() {
-  const [stores, setStores] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [actionLoading, setActionLoading] = useState<number | null>(null)
+  const [userGrowth] = React.useState(mockAnalyticsMetrics);
+  const [businessGrowth] = React.useState(
+    mockAnalyticsMetrics.map((item) => ({
+      ...item,
+      value: Math.floor(item.value * 0.15),
+    }))
+  );
 
-  useEffect(() => {
-    fetchStores()
-  }, [])
+  const topCategoriesData = [
+    { category: 'Restaurants', value: 45200 },
+    { category: 'Retail', value: 38900 },
+    { category: 'Healthcare', value: 32100 },
+    { category: 'Technology', value: 28500 },
+    { category: 'Education', value: 25600 },
+  ];
 
-  const fetchStores = async () => {
-    setIsLoading(true)
-    try {
-      const data = await storesApi.getPending()
-      setStores(data)
-    } catch (error: any) {
-      toast.error("Erreur lors de la récupération des boutiques")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleAction = async (id: number, action: 'validate' | 'reject') => {
-    setActionLoading(id)
-    try {
-      if (action === 'validate') {
-        await storesApi.validate(id)
-        toast.success("Boutique validée !")
-      } else {
-        await storesApi.reject(id)
-        toast.success("Boutique rejetée et supprimée.")
-      }
-      // Rafraîchir la liste
-      setStores(prev => prev.filter(s => s.id !== id))
-    } catch (error: any) {
-      toast.error(error.message)
-    } finally {
-      setActionLoading(null)
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
-  }
+  const searchVolumeData = [
+    { date: 'Jan 1', volume: 12000 },
+    { date: 'Jan 8', volume: 15200 },
+    { date: 'Jan 15', volume: 18400 },
+    { date: 'Jan 22', volume: 21100 },
+    { date: 'Jan 29', volume: 25300 },
+    { date: 'Feb 5', volume: 28900 },
+    { date: 'Feb 12', volume: 32100 },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Vérification Stores</h1>
-          <p className="text-muted-foreground">Gérez les demandes d'ouverture de boutique en attente</p>
-        </div>
-        <Badge variant="outline" className="text-sm px-3 py-1">
-          {stores.length} en attente
-        </Badge>
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground mt-2">Welcome back! Here is your platform overview.</p>
       </div>
 
-      <div className="grid gap-4">
-        <AnimatePresence mode="popLayout">
-          {stores.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-xl bg-background/50"
-            >
-              <Store className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
-              <p className="text-muted-foreground font-medium">Aucune boutique en attente de vérification</p>
-            </motion.div>
-          ) : (
-            stores.map((store) => (
-              <motion.div
-                key={store.id}
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Card className="overflow-hidden border-border/40 hover:border-primary/20 transition-colors bg-background/95 backdrop-blur">
-                  <CardHeader className="bg-muted/30 pb-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                          <Store className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-xl uppercase">{store.name}</CardTitle>
-                          <p className="text-sm text-muted-foreground capitalize">{store.city}, {store.address}</p>
-                        </div>
-                      </div>
-                      <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">PENDING</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="grid md:grid-cols-3 gap-6">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Hash className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-semibold">RNE:</span>
-                          <span className="font-mono bg-muted px-2 py-0.5 rounded">{store.rne || 'N/A'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Store className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-semibold">Catégorie:</span>
-                          <span>{store.category || 'Standard'}</span>
-                        </div>
-                      </div>
+      {/* KPI Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {mockKPIs.map((kpi) => {
+          const iconMap: Record<string, React.ReactNode> = {
+            users: <Users className="w-5 h-5" />,
+            briefcase: <Briefcase className="w-5 h-5" />,
+            'check-circle': <CheckCircle2 className="w-5 h-5" />,
+            package: <Package className="w-5 h-5" />,
+            search: <Search className="w-5 h-5" />,
+            'trending-up': <TrendingUp className="w-5 h-5" />,
+            'dollar-sign': <AlertCircle className="w-5 h-5" />,
+            activity: <Activity className="w-5 h-5" />,
+          };
 
-                      <div className="space-y-3 border-x border-border/40 px-6">
-                        <div className="flex items-center gap-2 text-sm">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-semibold">Propriétaire:</span>
-                          <span>{store.owner_details?.full_name || 'Inconnu'}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-semibold">Email:</span>
-                          <span className="truncate">{store.owner_details?.email || store.email}</span>
-                        </div>
-                      </div>
+          return (
+            <KPICard
+              key={kpi.label}
+              label={kpi.label}
+              value={kpi.value}
+              change={kpi.change}
+              percentageChange={kpi.percentageChange}
+              trend={kpi.trend}
+              icon={iconMap[kpi.icon || 'activity']}
+            />
+          );
+        })}
+      </div>
 
-                      <div className="flex items-center justify-end gap-3 px-2">
-                        <Button
-                          variant="outline"
-                          className="flex-1 max-w-[120px] rounded-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950"
-                          onClick={() => handleAction(store.id, 'reject')}
-                          disabled={actionLoading === store.id}
-                        >
-                          <X className="mr-2 h-4 w-4" />
-                          Rejeter
-                        </Button>
-                        <Button
-                          className="flex-1 max-w-[120px] rounded-full"
-                          onClick={() => handleAction(store.id, 'validate')}
-                          disabled={actionLoading === store.id}
-                        >
-                          {actionLoading === store.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              <Check className="mr-2 h-4 w-4" />
-                              Valider
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))
-          )}
-        </AnimatePresence>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* User Growth */}
+        <ChartCard title="User Growth" description="Total users over time">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={userGrowth}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="date" stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#000000"
+                strokeWidth={2}
+                dot={{ fill: '#000000', r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* Business Growth */}
+        <ChartCard title="Business Growth" description="Active businesses over time">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={businessGrowth}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="date" stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#374151"
+                strokeWidth={2}
+                dot={{ fill: '#374151', r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* Top Categories */}
+        <ChartCard title="Top Categories" description="Search volume by category">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={topCategoriesData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="category" stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                }}
+              />
+              <Bar dataKey="value" fill="#000000" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* Search Volume Trends */}
+        <ChartCard title="Search Volume Trends" description="Daily search volume over time">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={searchVolumeData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="date" stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="volume"
+                fill="#f0f0f0"
+                stroke="#000000"
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+
+      {/* Activity and System Health */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Activity */}
+        <div className="lg:col-span-2">
+          <RecentActivity />
+        </div>
+
+        {/* System Health */}
+        <div className="bg-card border border-border rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-6">System Health</h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                <span className="text-sm text-foreground">Platform Uptime</span>
+              </div>
+              <span className="text-sm font-bold text-foreground">99.95%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                <span className="text-sm text-foreground">API Response</span>
+              </div>
+              <span className="text-sm font-bold text-foreground">234ms</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                <span className="text-sm text-foreground">Database Status</span>
+              </div>
+              <span className="text-sm font-bold text-foreground">Healthy</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
+                <span className="text-sm text-foreground">Cache Memory</span>
+              </div>
+              <span className="text-sm font-bold text-foreground">78%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                <span className="text-sm text-foreground">Active Users</span>
+              </div>
+              <span className="text-sm font-bold text-foreground">2,456</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  )
+  );
 }

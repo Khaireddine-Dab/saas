@@ -1,300 +1,267 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { useLanguage } from "@/contexts/language-context"
-import { translations } from "@/lib/translations"
-import { Separator } from "@/components/ui/separator"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Copy, Eye, EyeOff, Plus, Trash2 } from "lucide-react"
-import { useTheme } from "next-themes"
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
-const apiKeys = [
+interface SettingSection {
+  title: string;
+  description: string;
+  settings: Setting[];
+}
+
+interface Setting {
+  label: string;
+  value: string | number | boolean;
+  type: 'text' | 'number' | 'toggle' | 'select';
+  options?: { label: string; value: string }[];
+}
+
+const settingsSections: SettingSection[] = [
   {
-    id: 1,
-    name: "Production API Key",
-    key: "sk_live_51234567890abcdef",
-    created: "2024-01-15",
-    lastUsed: "2 hours ago",
+    title: 'Commission Settings',
+    description: 'Configure platform commission rates and payment terms',
+    settings: [
+      { label: 'Default Commission Rate', value: 15, type: 'number' },
+      { label: 'Minimum Commission', value: 5, type: 'number' },
+      { label: 'Premium Seller Rate', value: 10, type: 'number' },
+      { label: 'Payment Cycle', value: 'weekly', type: 'select', options: [{ label: 'Weekly', value: 'weekly' }, { label: 'Bi-weekly', value: 'biweekly' }, { label: 'Monthly', value: 'monthly' }] },
+    ],
   },
   {
-    id: 2,
-    name: "Development API Key",
-    key: "sk_test_51234567890abcdef",
-    created: "2024-02-20",
-    lastUsed: "1 day ago",
+    title: 'Verification Rules',
+    description: 'Set requirements for business and user verification',
+    settings: [
+      { label: 'Require ID Verification', value: true, type: 'toggle' },
+      { label: 'Require Business License', value: true, type: 'toggle' },
+      { label: 'Require Tax ID', value: false, type: 'toggle' },
+      { label: 'Auto-approve Low-Risk', value: true, type: 'toggle' },
+    ],
   },
-]
+  {
+    title: 'Report Thresholds',
+    description: 'Configure when content is automatically flagged or removed',
+    settings: [
+      { label: 'Auto-Flag Threshold', value: 3, type: 'number' },
+      { label: 'Auto-Hide Threshold', value: 5, type: 'number' },
+      { label: 'Auto-Ban Threshold', value: 10, type: 'number' },
+      { label: 'Spam Score Threshold', value: 70, type: 'number' },
+    ],
+  },
+  {
+    title: 'Review Limits',
+    description: 'Control review posting and moderation settings',
+    settings: [
+      { label: 'Min Reviews Per User', value: 1, type: 'number' },
+      { label: 'Max Reviews Per Day', value: 20, type: 'number' },
+      { label: 'Review Minimum Length', value: 10, type: 'number' },
+      { label: 'New User Review Delay (days)', value: 7, type: 'number' },
+    ],
+  },
+  {
+    title: 'Featured Pricing',
+    description: 'Set pricing for featured/promoted listings',
+    settings: [
+      { label: 'Featured Product Daily Rate (AED)', value: 50, type: 'number' },
+      { label: 'Featured Business Daily Rate (AED)', value: 100, type: 'number' },
+      { label: 'Minimum Featured Duration (days)', value: 7, type: 'number' },
+      { label: 'Maximum Featured Duration (days)', value: 90, type: 'number' },
+    ],
+  },
+  {
+    title: 'Subscription Plans',
+    description: 'Configure subscription tiers for sellers',
+    settings: [
+      { label: 'Basic Plan Price (AED)', value: 199, type: 'number' },
+      { label: 'Pro Plan Price (AED)', value: 499, type: 'number' },
+      { label: 'Enterprise Plan Price (AED)', value: 1499, type: 'number' },
+      { label: 'Trial Period (days)', value: 14, type: 'number' },
+    ],
+  },
+];
 
 export default function SettingsPage() {
-  const { language, setLanguage } = useLanguage()
-  const { theme, setTheme } = useTheme()
-  const t = translations[language]
-  const [showApiKeys, setShowApiKeys] = useState<{ [key: number]: boolean }>({})
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(
+    Object.fromEntries(settingsSections.map((section, idx) => [idx.toString(), idx === 0]))
+  );
 
-  const toggleApiKeyVisibility = (id: number) => {
-    setShowApiKeys((prev) => ({ ...prev, [id]: !prev[id] }))
-  }
+  const toggleSection = (index: number) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [index.toString()]: !prev[index.toString()],
+    }));
+  };
+
+  const handleSave = (sectionIndex: number) => {
+    console.log('[v0] Saving settings for section:', settingsSections[sectionIndex].title);
+    // TODO: Connect to Supabase to save settings
+  };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t.settings}</h1>
-        <p className="text-muted-foreground">Manage your account settings and preferences</p>
+        <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+        <p className="text-muted-foreground mt-2">Configure platform rules, pricing, and policies</p>
       </div>
 
-      <Tabs defaultValue="account" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="account">Account</TabsTrigger>
-          <TabsTrigger value="preferences">{t.preferences}</TabsTrigger>
-          <TabsTrigger value="api">{t.apiKeys}</TabsTrigger>
-          <TabsTrigger value="integrations">{t.integrations}</TabsTrigger>
-        </TabsList>
+      {/* Settings Sections */}
+      <div className="space-y-4">
+        {settingsSections.map((section, sectionIndex) => (
+          <div key={sectionIndex} className="bg-card border border-border rounded-lg overflow-hidden">
+            {/* Section Header */}
+            <button
+              onClick={() => toggleSection(sectionIndex)}
+              className="w-full px-6 py-4 flex items-center justify-between hover:bg-muted/50 transition-colors text-left"
+            >
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">{section.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{section.description}</p>
+              </div>
+              {expandedSections[sectionIndex.toString()] ? (
+                <ChevronUp className="w-5 h-5 text-muted-foreground flex-shrink-0 ml-4" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-muted-foreground flex-shrink-0 ml-4" />
+              )}
+            </button>
 
-        {/* Account Settings */}
-        <TabsContent value="account" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>Update your account profile information</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center gap-6">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src="/placeholder.svg?height=80&width=80" />
-                  <AvatarFallback>JD</AvatarFallback>
-                </Avatar>
-                <div className="space-y-2">
-                  <Button variant="outline" size="sm">
-                    Change Avatar
-                  </Button>
-                  <p className="text-xs text-muted-foreground">JPG, GIF or PNG. Max size of 2MB.</p>
-                </div>
-              </div>
-              <Separator />
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" defaultValue="John" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" defaultValue="Doe" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">{t.emailAddress}</Label>
-                <Input id="email" type="email" defaultValue="john@example.com" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea id="bio" placeholder="Tell us about yourself" rows={4} />
-              </div>
-              <Separator />
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Change Password</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Current Password</Label>
-                  <Input id="currentPassword" type="password" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
-                  <Input id="newPassword" type="password" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
-                  <Input id="confirmNewPassword" type="password" />
-                </div>
-              </div>
-            </CardContent>
-            <CardContent className="flex justify-end gap-2 pt-0">
-              <Button variant="outline">Cancel</Button>
-              <Button>Save Changes</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Preferences */}
-        <TabsContent value="preferences" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t.generalSettings}</CardTitle>
-              <CardDescription>Manage your application preferences</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>{t.language}</Label>
-                  <p className="text-sm text-muted-foreground">Select your preferred language</p>
-                </div>
-                <Select value={language} onValueChange={(value) => setLanguage(value as any)}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="ar">العربية</SelectItem>
-                    <SelectItem value="fr">Français</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>{t.theme}</Label>
-                  <p className="text-sm text-muted-foreground">Select your preferred theme</p>
-                </div>
-                <Select value={theme} onValueChange={setTheme}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
-                    <SelectItem value="system">System</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>{t.timezone}</Label>
-                  <p className="text-sm text-muted-foreground">Select your timezone</p>
-                </div>
-                <Select defaultValue="utc">
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="utc">UTC</SelectItem>
-                    <SelectItem value="est">EST</SelectItem>
-                    <SelectItem value="pst">PST</SelectItem>
-                    <SelectItem value="gmt">GMT</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Notifications</CardTitle>
-              <CardDescription>Configure how you receive notifications</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">Receive email about your account activity</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Marketing Emails</Label>
-                  <p className="text-sm text-muted-foreground">Receive emails about new features and updates</p>
-                </div>
-                <Switch />
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Security Alerts</Label>
-                  <p className="text-sm text-muted-foreground">Get notified about security events</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* API Keys */}
-        <TabsContent value="api" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t.apiKeys}</CardTitle>
-              <CardDescription>Manage your API keys for integrations</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {apiKeys.map((apiKey) => (
-                <Card key={apiKey.id}>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-medium">{apiKey.name}</p>
-                          <p className="text-sm text-muted-foreground">Created {apiKey.created}</p>
+            {/* Section Content */}
+            {expandedSections[sectionIndex.toString()] && (
+              <>
+                <div className="border-t border-border px-6 py-6">
+                  <div className="space-y-6">
+                    {section.settings.map((setting, settingIndex) => (
+                      <div key={settingIndex} className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-foreground">{setting.label}</label>
+                        <div className="flex items-center gap-2">
+                          {setting.type === 'toggle' ? (
+                            <button
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                setting.value ? 'bg-primary' : 'bg-muted'
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                  setting.value ? 'translate-x-6' : 'translate-x-1'
+                                }`}
+                              />
+                            </button>
+                          ) : setting.type === 'select' ? (
+                            <select
+                              value={setting.value}
+                              className="bg-muted border border-border rounded px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
+                            >
+                              {setting.options?.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              type={setting.type}
+                              value={setting.value}
+                              className="bg-muted border border-border rounded px-3 py-2 text-sm text-foreground w-32 focus:outline-none focus:ring-2 focus:ring-ring/50"
+                              readOnly
+                            />
+                          )}
                         </div>
-                        <Badge variant="secondary">Last used {apiKey.lastUsed}</Badge>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={showApiKeys[apiKey.id] ? apiKey.key : "••••••••••••••••••••••••••"}
-                          readOnly
-                          className="font-mono text-sm"
-                        />
-                        <Button variant="outline" size="icon" onClick={() => toggleApiKeyVisibility(apiKey.id)}>
-                          {showApiKeys[apiKey.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                        <Button variant="outline" size="icon">
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="icon">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              <Button variant="outline" className="w-full bg-transparent">
-                <Plus className="mr-2 h-4 w-4" />
-                Create New API Key
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Integrations */}
-        <TabsContent value="integrations" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t.integrations}</CardTitle>
-              <CardDescription>Connect your account with third-party services</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {[
-                { name: "Google Calendar", description: "Sync your appointments", connected: true },
-                { name: "Slack", description: "Get notifications in Slack", connected: false },
-                { name: "WhatsApp", description: "Send messages via WhatsApp", connected: true },
-                { name: "Stripe", description: "Process payments", connected: false },
-              ].map((integration) => (
-                <div key={integration.name} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{integration.name}</p>
-                    <p className="text-sm text-muted-foreground">{integration.description}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {integration.connected && <Badge className="bg-green-600">Connected</Badge>}
-                    <Button variant={integration.connected ? "outline" : "default"} size="sm">
-                      {integration.connected ? "Disconnect" : "Connect"}
-                    </Button>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+
+                {/* Section Footer */}
+                <div className="border-t border-border px-6 py-4 bg-muted/30 flex justify-end gap-3">
+                  <Button variant="outline">Discard</Button>
+                  <Button onClick={() => handleSave(sectionIndex)}>Save Changes</Button>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Role Management Section */}
+      <div className="bg-card border border-border rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-6">Role Permissions</h3>
+
+        <div className="space-y-6">
+          {['Admin', 'Moderator', 'Analyst'].map((role) => (
+            <div key={role}>
+              <h4 className="text-sm font-medium text-foreground mb-3">{role}</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  'View Dashboard',
+                  'Manage Users',
+                  'Moderate Content',
+                  'Manage Reports',
+                  'Generate Analytics',
+                  'Configure Settings',
+                  'Manage Admins',
+                  'View Logs',
+                  'Export Data',
+                ].map((permission) => (
+                  <label key={permission} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      defaultChecked={role === 'Admin'}
+                      className="w-4 h-4 rounded border-border"
+                    />
+                    <span className="text-sm text-foreground">{permission}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex justify-end gap-3 mt-6">
+          <Button variant="outline">Discard</Button>
+          <Button>Save Permissions</Button>
+        </div>
+      </div>
+
+      {/* Broadcast Messages Section */}
+      <div className="bg-card border border-border rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Broadcast Messages</h3>
+        <p className="text-sm text-muted-foreground mb-4">Send system announcements to all users</p>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-foreground block mb-2">Message</label>
+            <textarea
+              placeholder="Enter your message..."
+              className="w-full bg-muted border border-border rounded px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 min-h-24 resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-foreground block mb-2">Target Audience</label>
+              <select className="w-full bg-muted border border-border rounded px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50">
+                <option>All Users</option>
+                <option>Sellers Only</option>
+                <option>Buyers Only</option>
+                <option>Unverified Businesses</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground block mb-2">Priority</label>
+              <select className="w-full bg-muted border border-border rounded px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50">
+                <option>Info</option>
+                <option>Warning</option>
+                <option>Critical</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button variant="outline">Discard</Button>
+            <Button>Send Message</Button>
+          </div>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
