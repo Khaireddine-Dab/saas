@@ -74,7 +74,7 @@ export function DashboardSidebar() {
       <div className="border-t p-3">
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+          className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10"
           size="sm"
           onClick={handleLogout}
         >

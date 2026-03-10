@@ -3,25 +3,57 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Grid, Users, Briefcase, Package, Star, AlertCircle, Map, BarChart3, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Grid, Users, Briefcase, Package, Star, AlertCircle, Map, BarChart3, Settings, ShoppingCart, Tag, Image as ImageIcon, Shield, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 interface NavItem {
   title: string;
-  href: string;
-  icon: React.ReactNode;
+  href?: string;
+  icon?: React.ReactNode;
+  section?: string;
 }
 
 const navItems: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: <Grid className="w-4 h-4" /> },
+  { title: 'Platform Management', section: 'true' },
   { title: 'Users', href: '/dashboard/users', icon: <Users className="w-4 h-4" /> },
-  { title: 'Businesses', href: '/dashboard/businesses', icon: <Briefcase className="w-4 h-4" /> },
+  { title: 'Merchants', href: '/dashboard/merchants', icon: <Briefcase className="w-4 h-4" /> },
+  { title: 'Drivers', href: '/dashboard/drivers', icon: <ShoppingCart className="w-4 h-4" /> },
+  { title: 'Commerce', section: 'true' },
+  { title: 'Orders', href: '/dashboard/orders', icon: <ShoppingCart className="w-4 h-4" /> },
   { title: 'Products', href: '/dashboard/products', icon: <Package className="w-4 h-4" /> },
   { title: 'Reviews', href: '/dashboard/reviews', icon: <Star className="w-4 h-4" /> },
-  { title: 'Reports', href: '/dashboard/reports', icon: <AlertCircle className="w-4 h-4" /> },
+  { title: 'Marketing', section: 'true' },
+  { title: 'Coupons', href: '/dashboard/coupons', icon: <Tag className="w-4 h-4" /> },
+  { title: 'Banners', href: '/dashboard/banners', icon: <ImageIcon className="w-4 h-4" /> },
+  { title: 'Operations', section: 'true' },
+  { title: 'Fraud Alerts', href: '/dashboard/fraud', icon: <Shield className="w-4 h-4" /> },
   { title: 'Map', href: '/dashboard/map', icon: <Map className="w-4 h-4" /> },
   { title: 'Analytics', href: '/dashboard/analytics', icon: <BarChart3 className="w-4 h-4" /> },
+  { title: 'Administration', section: 'true' },
+  { title: 'Roles & Permissions', href: '/dashboard/admin/roles', icon: <Settings className="w-4 h-4" /> },
+  { title: 'Categories', href: '/dashboard/admin/categories', icon: <Package className="w-4 h-4" /> },
+  { title: 'Brands', href: '/dashboard/admin/brands', icon: <Briefcase className="w-4 h-4" /> },
+  { title: 'Tax & Discount Reports', href: '/dashboard/admin/tax-reports', icon: <BarChart3 className="w-4 h-4" /> },
+  { title: 'Dispatcher', section: 'true' },
+  { title: 'Vehicles', href: '/dashboard/dispatcher/vehicles', icon: <ShoppingCart className="w-4 h-4" /> },
+  { title: 'Pricing', href: '/dashboard/dispatcher/pricing', icon: <Tag className="w-4 h-4" /> },
+  { title: 'Support', section: 'true' },
+  { title: 'Support Tickets', href: '/dashboard/support/tickets', icon: <AlertCircle className="w-4 h-4" /> },
+  { title: 'Live Chat', href: '/dashboard/support/chat', icon: <MessageCircle className="w-4 h-4" /> },
+  { title: 'Payments', section: 'true' },
+  { title: 'Transactions', href: '/dashboard/payments/transactions', icon: <BarChart3 className="w-4 h-4" /> },
+  { title: 'Refunds', href: '/dashboard/payments/refunds', icon: <AlertCircle className="w-4 h-4" /> },
+  { title: 'Subscriptions', href: '/dashboard/payments/subscriptions', icon: <Tag className="w-4 h-4" /> },
+  { title: 'Reports', section: 'true' },
+  { title: 'Sales Reports', href: '/dashboard/reports/sales', icon: <BarChart3 className="w-4 h-4" /> },
+  { title: 'Orders Reports', href: '/dashboard/reports/orders', icon: <Package className="w-4 h-4" /> },
+  { title: 'Communications', section: 'true' },
+  { title: 'Notification Center', href: '/dashboard/notifications', icon: <AlertCircle className="w-4 h-4" /> },
+  { title: 'Content Management', section: 'true' },
+  { title: 'CMS Pages', href: '/dashboard/cms-pages', icon: <ImageIcon className="w-4 h-4" /> },
+  { title: 'System', section: 'true' },
   { title: 'Settings', href: '/dashboard/settings', icon: <Settings className="w-4 h-4" /> },
 ];
 
@@ -48,7 +80,7 @@ export function SidebarNav() {
         {!collapsed && <h2 className="text-lg font-bold text-foreground">Ro2ya</h2>}
         <Button
           variant="ghost"
-          size="icon-sm"
+          size="icon"
           onClick={() => setCollapsed(!collapsed)}
           className="h-8 w-8"
         >
@@ -57,25 +89,58 @@ export function SidebarNav() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-6">
-        <div className="space-y-2">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
-                isActive(item.href)
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-              )}
-              title={collapsed ? item.title : undefined}
-            >
-              <span className="flex-shrink-0">{item.icon}</span>
-              {!collapsed && <span className="truncate">{item.title}</span>}
-            </Link>
-          ))}
-        </div>
+      <nav className="flex-1 overflow-y-auto px-2 py-4">
+        {!collapsed && (
+          <div className="space-y-1">
+            {navItems.map((item, idx) => {
+              if (item.section) {
+                return (
+                  <div key={item.title} className={cn('px-4 py-3', idx > 0 && 'mt-2')}>
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{item.title}</h3>
+                  </div>
+                );
+              }
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href!}
+                  className={cn(
+                    'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
+                    isActive(item.href!)
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  )}
+                  title={collapsed ? item.title : undefined}
+                >
+                  <span className="flex-shrink-0">{item.icon}</span>
+                  <span className="truncate">{item.title}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+        {collapsed && (
+          <div className="space-y-2 flex flex-col items-center">
+            {navItems.map((item) => {
+              if (item.section) return null;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href!}
+                  className={cn(
+                    'flex items-center justify-center w-10 h-10 rounded-lg transition-colors',
+                    isActive(item.href!)
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  )}
+                  title={item.title}
+                >
+                  {item.icon}
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </nav>
 
       {/* Footer */}

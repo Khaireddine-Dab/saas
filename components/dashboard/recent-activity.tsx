@@ -23,7 +23,7 @@ const defaultActivities: ActivityItem[] = [
     title: 'Business Approved',
     description: 'Tech Gadgets Store has been verified and approved',
     timestamp: new Date(Date.now() - 2 * 60000),
-    icon: <CheckCircle2 className="w-4 h-4 text-green-600" />,
+    icon: <CheckCircle2 className="w-4 h-4 text-green-500" />,
   },
   {
     id: '2',
@@ -31,7 +31,7 @@ const defaultActivities: ActivityItem[] = [
     title: 'Product Flagged',
     description: 'Wireless Earbuds Pro flagged for review quality issues',
     timestamp: new Date(Date.now() - 15 * 60000),
-    icon: <AlertCircle className="w-4 h-4 text-red-600" />,
+    icon: <AlertCircle className="w-4 h-4 text-destructive" />,
   },
   {
     id: '3',
@@ -39,7 +39,7 @@ const defaultActivities: ActivityItem[] = [
     title: 'Review Reported',
     description: 'Review on Shawarma Plate reported as spam',
     timestamp: new Date(Date.now() - 45 * 60000),
-    icon: <MessageSquare className="w-4 h-4 text-yellow-600" />,
+    icon: <MessageSquare className="w-4 h-4 text-yellow-500" />,
   },
   {
     id: '4',
@@ -47,7 +47,7 @@ const defaultActivities: ActivityItem[] = [
     title: 'New User',
     description: 'New user Mohammed Al-Mansoori joined the platform',
     timestamp: new Date(Date.now() - 2 * 3600000),
-    icon: <User className="w-4 h-4 text-blue-600" />,
+    icon: <User className="w-4 h-4 text-primary" />,
   },
   {
     id: '5',
@@ -55,7 +55,7 @@ const defaultActivities: ActivityItem[] = [
     title: 'Report Submitted',
     description: 'New dispute report filed against Tech Gadgets Store',
     timestamp: new Date(Date.now() - 3 * 3600000),
-    icon: <Clock className="w-4 h-4 text-orange-600" />,
+    icon: <Clock className="w-4 h-4 text-orange-500" />,
   },
 ];
 

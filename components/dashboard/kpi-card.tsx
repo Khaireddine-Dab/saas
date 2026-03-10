@@ -49,9 +49,9 @@ export function KPICard({
           <div
             className={cn(
               'flex items-center gap-1 px-2 py-1 rounded',
-              trend === 'up' && 'bg-green-50 text-green-700',
-              trend === 'down' && 'bg-red-50 text-red-700',
-              trend === 'stable' && 'bg-gray-50 text-gray-700'
+              trend === 'up' && 'bg-green-500/20 text-green-400',
+              trend === 'down' && 'bg-red-500/20 text-red-400',
+              trend === 'stable' && 'bg-muted text-muted-foreground'
             )}
           >
             {trend === 'up' && <TrendingUp className="w-3 h-3" />}

@@ -40,7 +40,7 @@ export default function AnalyticsPage() {
     { name: 'Orders', value: 9800 },
   ];
 
-  const COLORS = ['#000000', '#374151', '#6b7280', '#9ca3af'];
+  const COLORS = ['hsl(var(--primary))', 'hsl(var(--primary) / 0.8)', 'hsl(var(--primary) / 0.6)', 'hsl(var(--primary) / 0.4)'];
 
   return (
     <div className="space-y-6">
@@ -79,22 +79,22 @@ export default function AnalyticsPage() {
         <div className="bg-card border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground">Total Searches</p>
           <p className="text-2xl font-bold text-foreground">123,400</p>
-          <p className="text-xs text-green-600 mt-2">↑ 12% from last period</p>
+          <p className="text-xs text-green-500 mt-2">↑ 12% from last period</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground">Conversion Rate</p>
           <p className="text-2xl font-bold text-foreground">7.8%</p>
-          <p className="text-xs text-green-600 mt-2">↑ 0.5% from last period</p>
+          <p className="text-xs text-green-500 mt-2">↑ 0.5% from last period</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground">Avg Click Value</p>
           <p className="text-2xl font-bold text-foreground">45 AED</p>
-          <p className="text-xs text-red-600 mt-2">↓ 3% from last period</p>
+          <p className="text-xs text-destructive mt-2">↓ 3% from last period</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground">Platform Revenue</p>
           <p className="text-2xl font-bold text-foreground">124 K AED</p>
-          <p className="text-xs text-green-600 mt-2">↑ 15% from last period</p>
+          <p className="text-xs text-green-500 mt-2">↑ 15% from last period</p>
         </div>
       </div>
 
@@ -104,19 +104,20 @@ export default function AnalyticsPage() {
         <ChartCard title="Search Performance" description="Weekly search, clicks, and revenue">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={searchPerformanceData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="week" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="week" stroke="hsl(var(--muted-foreground))" />
+              <YAxis stroke="hsl(var(--muted-foreground))" />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e5e7eb',
+                  backgroundColor: 'hsl(var(--popover))',
+                  border: '1px solid hsl(var(--border))',
                   borderRadius: '8px',
+                  color: 'hsl(var(--popover-foreground))'
                 }}
               />
               <Legend />
-              <Line type="monotone" dataKey="searches" stroke="#000000" strokeWidth={2} />
-              <Line type="monotone" dataKey="conversions" stroke="#374151" strokeWidth={2} />
+              <Line type="monotone" dataKey="searches" stroke="hsl(var(--primary))" strokeWidth={2} />
+              <Line type="monotone" dataKey="conversions" stroke="hsl(var(--primary) / 0.6)" strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -129,16 +130,17 @@ export default function AnalyticsPage() {
               layout="vertical"
               margin={{ top: 5, right: 30, left: 200, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis type="number" stroke="#6b7280" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis type="number" stroke="hsl(var(--muted-foreground))" />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e5e7eb',
+                  backgroundColor: 'hsl(var(--popover))',
+                  border: '1px solid hsl(var(--border))',
                   borderRadius: '8px',
+                  color: 'hsl(var(--popover-foreground))'
                 }}
               />
-              <Bar dataKey="searchCount" fill="#000000" radius={[0, 8, 8, 0]} />
+              <Bar dataKey="searchCount" fill="hsl(var(--primary))" radius={[0, 8, 8, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -147,17 +149,18 @@ export default function AnalyticsPage() {
         <ChartCard title="Conversion Funnel" description="User journey from search to order">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={conversionFunnelData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="name" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
+              <YAxis stroke="hsl(var(--muted-foreground))" />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e5e7eb',
+                  backgroundColor: 'hsl(var(--popover))',
+                  border: '1px solid hsl(var(--border))',
                   borderRadius: '8px',
+                  color: 'hsl(var(--popover-foreground))'
                 }}
               />
-              <Bar dataKey="value" fill="#000000" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="value" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -173,7 +176,7 @@ export default function AnalyticsPage() {
                 labelLine={false}
                 label={({ name, value }) => `${name}: ${value}`}
                 outerRadius={80}
-                fill="#000000"
+                fill="hsl(var(--primary))"
                 dataKey="value"
               >
                 {conversionFunnelData.map((entry, index) => (
@@ -258,7 +261,7 @@ export default function AnalyticsPage() {
               label: 'Trend',
               sortable: true,
               render: (value) => (
-                <span className={value === 'up' ? 'text-green-600' : value === 'down' ? 'text-red-600' : 'text-gray-600'}>
+                <span className={value === 'up' ? 'text-green-500' : value === 'down' ? 'text-destructive' : 'text-muted-foreground'}>
                   {value === 'up' ? '↑' : value === 'down' ? '↓' : '→'} {value}
                 </span>
               ),
@@ -268,7 +271,7 @@ export default function AnalyticsPage() {
               label: 'Change',
               sortable: true,
               render: (value) => (
-                <span className={value > 0 ? 'text-green-600' : 'text-red-600'}>
+                <span className={value > 0 ? 'text-green-500' : 'text-destructive'}>
                   {value > 0 ? '+' : ''}{value.toFixed(1)}%
                 </span>
               ),

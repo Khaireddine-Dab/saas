@@ -32,6 +32,7 @@ export default function ReportsPage() {
     const aVal = a[sortKey];
     const bVal = b[sortKey];
 
+    if (aVal === undefined || bVal === undefined) return 0;
     if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
     if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
     return 0;
@@ -44,7 +45,7 @@ export default function ReportsPage() {
 
   const statusOptions = ['pending', 'investigating', 'waiting_response', 'resolved', 'escalated'];
   const priorityOptions = ['low', 'medium', 'high', 'critical'];
-  
+
   const statusCounts = {
     pending: mockReports.filter(r => r.status === 'pending').length,
     investigating: mockReports.filter(r => r.status === 'investigating').length,
@@ -63,15 +64,15 @@ export default function ReportsPage() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return 'text-red-600';
+        return 'text-red-500';
       case 'high':
-        return 'text-orange-600';
+        return 'text-orange-500';
       case 'medium':
-        return 'text-yellow-600';
+        return 'text-yellow-500';
       case 'low':
-        return 'text-green-600';
+        return 'text-green-500';
       default:
-        return 'text-gray-600';
+        return 'text-muted-foreground';
     }
   };
 
@@ -137,15 +138,15 @@ export default function ReportsPage() {
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground">Pending</p>
-          <p className="text-2xl font-bold text-yellow-600">{statusCounts.pending}</p>
+          <p className="text-2xl font-bold text-yellow-500">{statusCounts.pending}</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground">Critical</p>
-          <p className="text-2xl font-bold text-red-600">{priorityCounts.critical}</p>
+          <p className="text-2xl font-bold text-destructive">{priorityCounts.critical}</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground">Resolved</p>
-          <p className="text-2xl font-bold text-green-600">{statusCounts.resolved}</p>
+          <p className="text-2xl font-bold text-green-500">{statusCounts.resolved}</p>
         </div>
       </div>
 

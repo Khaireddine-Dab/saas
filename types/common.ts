@@ -27,28 +27,28 @@ export interface ApiResponse<T> {
 }
 
 export const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-green-50 text-green-700 border-green-200',
-  inactive: 'bg-gray-50 text-gray-700 border-gray-200',
-  pending: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  approved: 'bg-green-50 text-green-700 border-green-200',
-  rejected: 'bg-red-50 text-red-700 border-red-200',
-  suspended: 'bg-orange-50 text-orange-700 border-orange-200',
-  visible: 'bg-green-50 text-green-700 border-green-200',
-  hidden: 'bg-gray-50 text-gray-700 border-gray-200',
-  flagged: 'bg-red-50 text-red-700 border-red-200',
-  banned: 'bg-red-50 text-red-700 border-red-200',
-  investigating: 'bg-blue-50 text-blue-700 border-blue-200',
-  waiting_response: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  resolved: 'bg-green-50 text-green-700 border-green-200',
-  escalated: 'bg-red-50 text-red-700 border-red-200',
+  active: 'bg-green-500/20 text-green-400 border-green-500/40',
+  inactive: 'bg-muted text-muted-foreground border-border',
+  pending: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',
+  approved: 'bg-green-500/20 text-green-400 border-green-500/40',
+  rejected: 'bg-red-500/20 text-red-400 border-red-500/40',
+  suspended: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
+  visible: 'bg-green-500/20 text-green-400 border-green-500/40',
+  hidden: 'bg-muted text-muted-foreground border-border',
+  flagged: 'bg-red-500/20 text-red-400 border-red-500/40',
+  banned: 'bg-red-500/30 text-red-300 border-red-500/50',
+  investigating: 'bg-primary/20 text-primary border-primary/40',
+  waiting_response: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',
+  resolved: 'bg-green-500/20 text-green-400 border-green-500/40',
+  escalated: 'bg-red-500/20 text-red-400 border-red-500/40',
 };
 
 export const RISK_LEVELS = ['low', 'medium', 'high', 'critical'] as const;
 export type RiskLevel = (typeof RISK_LEVELS)[number];
 
 export const RISK_COLORS: Record<RiskLevel, string> = {
-  low: 'bg-green-50 text-green-700 border-green-200',
-  medium: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  high: 'bg-orange-50 text-orange-700 border-orange-200',
-  critical: 'bg-red-50 text-red-700 border-red-200',
+  low: 'bg-green-500/20 text-green-400 border-green-500/40',
+  medium: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',
+  high: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
+  critical: 'bg-red-500/20 text-red-400 border-red-500/40',
 };

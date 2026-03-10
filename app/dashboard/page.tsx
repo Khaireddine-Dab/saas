@@ -14,6 +14,22 @@ import {
   Activity,
   AlertCircle,
   CheckCircle2,
+  UserPlus,
+  ShoppingBag,
+  Clock,
+  Truck,
+  XCircle,
+  PlusSquare,
+  Store,
+  UserCheck,
+  Settings2,
+  Layers,
+  Layout,
+  Tag,
+  Box,
+  Percent,
+  Ticket,
+  Star,
 } from 'lucide-react';
 import {
   LineChart,
@@ -30,6 +46,11 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartLegend } from '@/components/ui/chart';
+import { AdminCommandSearch } from '@/components/admin/admin-command-search';
+import { FraudAlertPanel } from '@/components/admin/fraud-alert-panel';
+import { PlatformHealth } from '@/components/admin/platform-health';
+import { RevenueIntelligence } from '@/components/admin/revenue-intelligence';
+import { BusinessInsights } from '@/components/admin/business-insights';
 
 export default function DashboardPage() {
   const [userGrowth] = React.useState(mockAnalyticsMetrics);
@@ -60,6 +81,9 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* Command Search */}
+      <AdminCommandSearch />
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
@@ -67,12 +91,28 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
         {mockKPIs.map((kpi) => {
           const iconMap: Record<string, React.ReactNode> = {
             users: <Users className="w-5 h-5" />,
-            briefcase: <Briefcase className="w-5 h-5" />,
+            'user-plus': <UserPlus className="w-5 h-5" />,
+            'shopping-bag': <ShoppingBag className="w-5 h-5" />,
+            clock: <Clock className="w-5 h-5" />,
+            truck: <Truck className="w-5 h-5" />,
             'check-circle': <CheckCircle2 className="w-5 h-5" />,
+            'x-circle': <XCircle className="w-5 h-5" />,
+            'plus-square': <PlusSquare className="w-5 h-5" />,
+            store: <Store className="w-5 h-5" />,
+            'user-check': <UserCheck className="w-5 h-5" />,
+            'settings-2': <Settings2 className="w-5 h-5" />,
+            layers: <Layers className="w-5 h-5" />,
+            layout: <Layout className="w-5 h-5" />,
+            tag: <Tag className="w-5 h-5" />,
+            box: <Box className="w-5 h-5" />,
+            percent: <Percent className="w-5 h-5" />,
+            ticket: <Ticket className="w-5 h-5" />,
+            star: <Star className="w-5 h-5" />,
+            briefcase: <Briefcase className="w-5 h-5" />,
             package: <Package className="w-5 h-5" />,
             search: <Search className="w-5 h-5" />,
             'trending-up': <TrendingUp className="w-5 h-5" />,
@@ -100,9 +140,9 @@ export default function DashboardPage() {
         <ChartCard title="User Growth" description="Total users over time">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={userGrowth}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="date" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
+              <YAxis stroke="hsl(var(--muted-foreground))" />
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#ffffff',
@@ -113,9 +153,9 @@ export default function DashboardPage() {
               <Line
                 type="monotone"
                 dataKey="value"
-                stroke="#000000"
+                stroke="hsl(var(--primary))"
                 strokeWidth={2}
-                dot={{ fill: '#000000', r: 4 }}
+                dot={{ fill: 'hsl(var(--primary))', r: 4 }}
                 activeDot={{ r: 6 }}
               />
             </LineChart>
@@ -126,14 +166,15 @@ export default function DashboardPage() {
         <ChartCard title="Business Growth" description="Active businesses over time">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={businessGrowth}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="date" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
+              <YAxis stroke="hsl(var(--muted-foreground))" />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e5e7eb',
+                  backgroundColor: 'hsl(var(--popover))',
+                  border: '1px solid hsl(var(--border))',
                   borderRadius: '8px',
+                  color: 'hsl(var(--popover-foreground))'
                 }}
               />
               <Line
@@ -152,17 +193,18 @@ export default function DashboardPage() {
         <ChartCard title="Top Categories" description="Search volume by category">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={topCategoriesData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="category" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="category" stroke="hsl(var(--muted-foreground))" />
+              <YAxis stroke="hsl(var(--muted-foreground))" />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e5e7eb',
+                  backgroundColor: 'hsl(var(--popover))',
+                  border: '1px solid hsl(var(--border))',
                   borderRadius: '8px',
+                  color: 'hsl(var(--popover-foreground))'
                 }}
               />
-              <Bar dataKey="value" fill="#000000" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="value" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -171,21 +213,22 @@ export default function DashboardPage() {
         <ChartCard title="Search Volume Trends" description="Daily search volume over time">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={searchVolumeData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="date" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
+              <YAxis stroke="hsl(var(--muted-foreground))" />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e5e7eb',
+                  backgroundColor: 'hsl(var(--popover))',
+                  border: '1px solid hsl(var(--border))',
                   borderRadius: '8px',
+                  color: 'hsl(var(--popover-foreground))'
                 }}
               />
               <Area
                 type="monotone"
                 dataKey="volume"
-                fill="#f0f0f0"
-                stroke="#000000"
+                fill="hsl(var(--muted))"
+                stroke="hsl(var(--primary))"
                 strokeWidth={2}
               />
             </AreaChart>
@@ -206,41 +249,52 @@ export default function DashboardPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <span className="text-sm text-foreground">Platform Uptime</span>
               </div>
               <span className="text-sm font-bold text-foreground">99.95%</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <span className="text-sm text-foreground">API Response</span>
               </div>
               <span className="text-sm font-bold text-foreground">234ms</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <span className="text-sm text-foreground">Database Status</span>
               </div>
               <span className="text-sm font-bold text-foreground">Healthy</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
+                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                 <span className="text-sm text-foreground">Cache Memory</span>
               </div>
               <span className="text-sm font-bold text-foreground">78%</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <span className="text-sm text-foreground">Active Users</span>
               </div>
               <span className="text-sm font-bold text-foreground">2,456</span>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Advanced Panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <FraudAlertPanel limit={5} />
+        <BusinessInsights />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <PlatformHealth />
+        <RevenueIntelligence />
       </div>
     </div>
   );

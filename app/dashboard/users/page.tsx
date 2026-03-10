@@ -144,15 +144,15 @@ export default function UsersPage() {
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground">Active</p>
-          <p className="text-2xl font-bold text-green-600">{mockUsers.filter(u => u.status === 'active').length}</p>
+          <p className="text-2xl font-bold text-green-400">{mockUsers.filter(u => u.status === 'active').length}</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground">Suspended</p>
-          <p className="text-2xl font-bold text-yellow-600">{mockUsers.filter(u => u.status === 'suspended').length}</p>
+          <p className="text-2xl font-bold text-yellow-400">{mockUsers.filter(u => u.status === 'suspended').length}</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground">Banned</p>
-          <p className="text-2xl font-bold text-red-600">{mockUsers.filter(u => u.status === 'banned').length}</p>
+          <p className="text-2xl font-bold text-red-400">{mockUsers.filter(u => u.status === 'banned').length}</p>
         </div>
       </div>
 
