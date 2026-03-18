@@ -41,3 +41,9 @@ export interface CouponFilter {
   businessId?: string;
   search?: string;
 }
+
+export type ProductStatus = 'visible' | 'hidden' | 'flagged' | 'banned';
+
+export type UserStatus = 'active' | 'suspended' | 'banned';
+
+export type BusinessStatus = 'active' | 'suspended' | 'pending' | 'rejected';

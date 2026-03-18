@@ -4,7 +4,7 @@ import React from 'react';
 import { KPICard } from '@/components/dashboard/kpi-card';
 import { ChartCard } from '@/components/dashboard/chart-card';
 import { RecentActivity } from '@/components/dashboard/recent-activity';
-import { mockKPIs, mockAnalyticsMetrics } from '@/lib/mock-data';
+import { mockKPIs, mockAnalyticsMetrics } from '@/lib/dashboard-data';
 import {
   Users,
   Briefcase,
@@ -127,7 +127,7 @@ export default function DashboardPage() {
               value={kpi.value}
               change={kpi.change}
               percentageChange={kpi.percentageChange}
-              trend={kpi.trend}
+              trend={kpi.trend as "up" | "down" | "stable"}
               icon={iconMap[kpi.icon || 'activity']}
             />
           );

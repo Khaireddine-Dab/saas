@@ -7,7 +7,7 @@ import { RiskScoreBadge } from '@/components/dashboard/risk-score-badge';
 import { Button } from '@/components/ui/button';
 import { Search, Filter, Plus, MapPin } from 'lucide-react';
 import { formatNumber, formatDate } from '@/lib/helpers';
-import { mockBusinesses } from '@/lib/mock-data';
+import { mockBusinesses } from '@/lib/mock-moderation-data';
 import { Business } from '@/types/business';
 
 export default function BusinessesPage() {
