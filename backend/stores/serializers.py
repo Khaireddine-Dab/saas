@@ -10,5 +10,6 @@ class StoreSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'slug', 'description', 'phone', 'email', 
             'address', 'city', 'status', 'rne', 'owner', 'owner_details',
-            'created_at', 'updated_at'
+            'created_at', 'updated_at', 'rating_average', 'total_reviews', 'total_orders'
         ]
+

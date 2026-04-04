@@ -5,7 +5,7 @@ from users.models import User
 class Store(models.Model):
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'En attente'
-        ACCEPTED = 'ACCEPTED', 'Accepté'
+        PUBLISHED = 'PUBLISHED', 'Publié'
         REJECTED = 'REJECTED', 'Rejeté'
 
     id = models.BigAutoField(primary_key=True)
@@ -23,6 +23,9 @@ class Store(models.Model):
     rne = models.TextField(unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    rating_average = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
+    total_reviews = models.IntegerField(default=0)
+    total_orders = models.IntegerField(default=0)
 
     class Meta:
         db_table = 'stores'
@@ -30,3 +33,4 @@ class Store(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.status})"
+

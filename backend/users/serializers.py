@@ -5,8 +5,8 @@ from .models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'role', 'full_name', 'phone', 'avatar_url', 'city', 'address', 'email', 'created_at', 'latitude', 'longitude']
-        read_only_fields = ['id', 'role', 'created_at']
+        fields = ['id', 'role', 'status', 'full_name', 'phone', 'avatar_url', 'city', 'address', 'email', 'created_at', 'latitude', 'longitude']
+        read_only_fields = ['id', 'created_at']
 
 
 class SignupSerializer(serializers.Serializer):

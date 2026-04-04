@@ -7,8 +7,15 @@ class User(models.Model):
         PRO = 'PRO', 'Pro'
         ADMIN = 'ADMIN', 'Admin'
 
+    class Status(models.TextChoices):
+        ACTIVE = 'active', 'Active'
+        SUSPENDED = 'suspended', 'Suspended'
+        BANNED = 'banned', 'Banned'
+        INACTIVE = 'inactive', 'Inactive'
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     role = models.TextField(default=Role.ADMIN)
+    status = models.TextField(default=Status.ACTIVE, null=True, blank=True)
     full_name = models.TextField(null=True, blank=True)
     phone = models.TextField(null=True, blank=True)
     avatar_url = models.TextField(null=True, blank=True)
@@ -42,7 +49,7 @@ class User(models.Model):
     
     @property
     def is_active(self):
-        return True
+        return self.status not in [self.Status.BANNED, self.Status.INACTIVE]
     
     @property
     def is_staff(self):

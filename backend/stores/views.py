@@ -19,6 +19,19 @@ class PendingStoreListView(APIView):
         serializer = StoreSerializer(pending_stores, many=True)
         return Response(serializer.data)
 
+class StoreListView(APIView):
+    """
+    GET /api/stores/
+    Liste toutes les boutiques.
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        stores = Store.objects.all().order_by('-created_at')
+        serializer = StoreSerializer(stores, many=True)
+        return Response(serializer.data)
+
 class StoreActionView(APIView):
     """
     POST /api/stores/{id}/validate/ -> Status ACCEPTED
@@ -34,7 +47,7 @@ class StoreActionView(APIView):
             return Response({'error': 'Boutique introuvable.'}, status=status.HTTP_404_NOT_FOUND)
 
         if action == 'validate':
-            store.status = 'ACCEPTED'
+            store.status = 'PUBLISHED'
             store.save()
             return Response({'message': 'Boutique validée avec succès.'})
             
@@ -44,3 +57,17 @@ class StoreActionView(APIView):
             return Response({'message': 'Boutique rejetée et supprimée.'})
             
         return Response({'error': 'Action non valide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+class RatingStore(APIView):
+    authentication_classes =[JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, store_id):
+        try:
+            store = Store.objects.get(id=store_id)
+        except Store.DoesNotExist:
+            return Response({'error': 'Boutique introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response({
+            'rating': store.rating_average,
+            'review_count': store.total_reviews
+        })

@@ -202,6 +202,94 @@ class UserListView(APIView):
         return Response(serializer.data)
 
 
+class AddUserView(APIView):
+    """
+    POST /api/users/add/
+    Crée un nouvel utilisateur (réservé aux admins).
+    Body: { email, password, full_name, phone, role }
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Vérifier que l'appelant est admin
+        if str(getattr(request.user, 'role', '')).upper() != 'ADMIN':
+            return Response(
+                {'error': 'Accès réservé aux administrateurs.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        email = request.data.get('email')
+        password = request.data.get('password')
+        full_name = request.data.get('full_name', '')
+        phone = request.data.get('phone', '')
+        role = request.data.get('role', User.Role.CLIENT)
+
+        if not email or not password:
+            return Response(
+                {'error': 'Email et mot de passe sont obligatoires.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Valider le rôle
+        valid_roles = [r.value for r in User.Role]
+        if role.upper() not in [r.upper() for r in valid_roles]:
+            return Response(
+                {'error': f'Rôle invalide. Rôles acceptés: {valid_roles}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        supabase = get_supabase_client()
+
+        # 1. Créer dans Supabase Auth
+        try:
+            auth_response = supabase.auth.admin.create_user({
+                'email': email,
+                'password': password,
+                'email_confirm': True,
+            })
+        except Exception as e:
+            return Response(
+                {'error': f'Erreur Supabase Auth : {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        auth_user = auth_response.user
+        if not auth_user:
+            return Response(
+                {'error': 'Impossible de créer le compte Supabase.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user_uuid = auth_user.id
+
+        # 2. Insérer dans public.users
+        try:
+            user, _ = User.objects.update_or_create(
+                id=user_uuid,
+                defaults={
+                    'email': email,
+                    'full_name': full_name,
+                    'phone': phone,
+                    'role': role.upper(),
+                }
+            )
+        except Exception as e:
+            try:
+                supabase.auth.admin.delete_user(str(user_uuid))
+            except Exception:
+                pass
+            return Response(
+                {'error': f'Erreur insertion public.users : {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        return Response(
+            {'message': 'Utilisateur créé avec succès.', 'user': UserSerializer(user).data},
+            status=status.HTTP_201_CREATED
+        )
+
+
 class MeView(APIView):
     """
     GET  /api/users/me/  → Profil de l'utilisateur connecté
