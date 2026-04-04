@@ -6,7 +6,7 @@ import { StatusBadge } from '@/components/dashboard/status-badge';
 import { Button } from '@/components/ui/button';
 import { Search, Filter } from 'lucide-react';
 import { formatDate } from '@/lib/helpers';
-import { mockReports } from '@/lib/mock-data';
+import { mockReports } from '@/lib/mock-moderation-data';
 import { Report } from '@/types/report';
 
 export default function ReportsPage() {

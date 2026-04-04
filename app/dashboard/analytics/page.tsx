@@ -20,7 +20,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { mockTopSearchTerms, mockCategoryDemand } from '@/lib/mock-data';
+import { mockTopSearchTerms, mockCategoryDemand } from '@/lib/mock-moderation-data';
 import { TopSearchTerm, CategoryDemand } from '@/types/analytics';
 
 export default function AnalyticsPage() {

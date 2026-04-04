@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Search, MapPin } from 'lucide-react';
 import { DataTable } from '@/components/dashboard/data-table';
 import { StatusBadge } from '@/components/dashboard/status-badge';
-import { mockBusinesses } from '@/lib/mock-data';
+import { mockBusinesses } from '@/lib/mock-moderation-data';
 import { Business } from '@/types/business';
 
 // Note: Leaflet integration is prepared here
@@ -50,11 +50,10 @@ export default function MapPage() {
               <button
                 key={business.id}
                 onClick={() => setSelectedBusiness(business)}
-                className={`w-full text-left p-4 rounded-lg border transition-all ${
-                  selectedBusiness?.id === business.id
+                className={`w-full text-left p-4 rounded-lg border transition-all ${selectedBusiness?.id === business.id
                     ? 'bg-primary text-primary-foreground border-primary'
                     : 'bg-card border-border hover:border-muted'
-                }`}
+                  }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">

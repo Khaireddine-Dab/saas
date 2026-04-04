@@ -26,7 +26,7 @@ const mockOnboardingQueue = Array.from({ length: 8 }, (_, i) => ({
   kyc: {
     businessName: `Store ${i + 1}`,
     businessType: ['restaurant', 'grocery', 'pharmacy'][i % 3],
-    taxId: `TAX-${String(i + 1).padStart(8, '0')}`,
+    rne: `RNE-${String(i + 1).padStart(8, '0')}`,
     registrationNumber: `REG-${String(i + 1).padStart(6, '0')}`,
     ownerName: `Owner ${i + 1}`,
     ownerEmail: `owner${i + 1}@example.com`,
@@ -56,7 +56,7 @@ const mockOnboardingQueue = Array.from({ length: 8 }, (_, i) => ({
       {
         id: `doc-2-${i}`,
         type: 'tax_id' as const,
-        fileName: `TaxID_${i + 1}.pdf`,
+        fileName: `RNE_${i + 1}.pdf`,
         fileUrl: '#',
         uploadedAt: new Date(),
         verificationStatus: ['approved', 'pending'][i % 2] as any,

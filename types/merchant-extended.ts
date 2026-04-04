@@ -20,7 +20,7 @@ export interface MerchantKYC {
   businessName: string;
   businessType: string; // restaurant, grocery, pharmacy, etc.
   registrationNumber: string;
-  taxId: string;
+  rne: string;
   panNumber?: string;
   gstNumber?: string;
   ownerName: string;

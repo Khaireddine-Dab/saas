@@ -64,8 +64,8 @@ export function MerchantVerification({
             <p className="text-sm text-muted-foreground">{kyc.ownerEmail}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Tax ID</p>
-            <p className="font-semibold">{kyc.taxId}</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">RNE</p>
+            <p className="font-semibold">{kyc.rne}</p>
             <p className="text-sm text-muted-foreground">Reg: {kyc.registrationNumber}</p>
           </div>
         </div>
@@ -88,7 +88,7 @@ export function MerchantVerification({
                     {statusIcons[doc.verificationStatus]}
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium capitalize">{doc.type.replace('_', ' ')}</p>
+                    <p className="font-medium capitalize">{doc.type.replace('tax_id', 'RNE').replace('_', ' ')}</p>
                     <p className="text-sm text-muted-foreground">{doc.fileName}</p>
                     {doc.rejectionReason && (
                       <p className="text-xs text-destructive mt-1">{doc.rejectionReason}</p>
