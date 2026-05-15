@@ -1,54 +1,28 @@
-'use client';
+﻿'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useUsers } from '@/hooks/useUsers';
 import { Button } from '@/components/ui/button';
 import {
   Search, Plus, X,
-  Mail, MapPin, Calendar, Clock,
-  ShieldBan, UserCircle2, ChevronRight,
-  Activity, MessageSquare,
-  ArrowUpDown, ArrowUp, ArrowDown,
+  Mail, MapPin, Calendar,
+  UserCircle2, ChevronRight,
 } from 'lucide-react';
+import type { User, UserStatus, UserRole } from '@/types/user';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'moderator' | 'analyst' | 'user';
-  status: 'active' | 'inactive' | 'suspended' | 'banned';
-  joinDate: Date;
-  activityScore: number;
-  location?: string;
-  lastLogin?: Date;
-  reviews?: number;
-}
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const mockUsers: User[] = [
-  { id: '1', name: 'Mohammed Al-Mansoori', email: 'mohammed@example.com', role: 'user',      status: 'active',    joinDate: new Date('2023-01-15'), activityScore: 95, location: 'Tunis, Tunisia',   lastLogin: new Date(),                                     reviews: 12 },
-  { id: '2', name: 'Layla Al-Kaabi',       email: 'layla@example.com',    role: 'user',      status: 'active',    joinDate: new Date('2023-03-20'), activityScore: 78, location: 'Sfax, Tunisia',    lastLogin: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), reviews: 7  },
-  { id: '3', name: 'Fatima Al-Mazrouei',   email: 'fatima@example.com',   role: 'user',      status: 'suspended', joinDate: new Date('2022-06-10'), activityScore: 45, location: 'Sousse, Tunisia',                                                              reviews: 3  },
-  { id: '4', name: 'Ahmed Al-Mansouri',    email: 'ahmed@example.com',    role: 'user',      status: 'active',    joinDate: new Date('2023-09-05'), activityScore: 82, location: 'Tunis, Tunisia',   lastLogin: new Date(Date.now() - 12 * 60 * 60 * 1000),     reviews: 9  },
-  { id: '5', name: 'Noor Al-Mazrouei',     email: 'noor@example.com',     role: 'user',      status: 'banned',    joinDate: new Date('2022-11-20'), activityScore: 12, location: 'Bizerte, Tunisia',                                                             reviews: 1  },
-  { id: '6', name: 'Hassan Al-Mansoori',   email: 'hassan@example.com',   role: 'user',      status: 'active',    joinDate: new Date('2024-01-10'), activityScore: 68, location: 'Tunis, Tunisia',   lastLogin: new Date(Date.now() - 5 * 60 * 60 * 1000),      reviews: 5  },
-  { id: '7', name: 'Sara Ben Salah',       email: 'sara@example.com',     role: 'moderator', status: 'active',    joinDate: new Date('2023-05-14'), activityScore: 91, location: 'Tunis, Tunisia',   lastLogin: new Date(Date.now() - 30 * 60 * 1000),          reviews: 0  },
-  { id: '8', name: 'Youssef Gharbi',       email: 'youssef@example.com',  role: 'analyst',   status: 'inactive',  joinDate: new Date('2023-08-22'), activityScore: 34, location: 'Nabeul, Tunisia',  lastLogin: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),reviews: 2  },
-];
 
 // ─── Config Maps ──────────────────────────────────────────────────────────────
-const statusConfig: Record<User['status'], { label: string; dot: string; badge: string }> = {
-  active:    { label: 'Active',    dot: 'bg-green-500',  badge: 'bg-green-500/10 text-green-400 border-green-500/20' },
-  inactive:  { label: 'Inactive',  dot: 'bg-gray-500',   badge: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
-  suspended: { label: 'Suspended', dot: 'bg-orange-500', badge: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
-  banned:    { label: 'Banned',    dot: 'bg-red-500',    badge: 'bg-red-500/10 text-red-400 border-red-500/20' },
+const statusConfig: Record<UserStatus, { label: string; dot: string; badge: string }> = {
+  active:    { label: 'Actif',     dot: 'bg-green-500',  badge: 'bg-green-500/10 text-green-400 border-green-500/20' },
+  inactive:  { label: 'Inactif',   dot: 'bg-gray-500',   badge: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
+  suspended: { label: 'Suspendu',  dot: 'bg-orange-500', badge: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
+  banned:    { label: 'Bannis',    dot: 'bg-red-500',    badge: 'bg-red-500/10 text-red-400 border-red-500/20' },
 };
 
-const roleConfig: Record<User['role'], string> = {
-  admin:     'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  moderator: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  analyst:   'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-  user:      'bg-gray-500/10 text-gray-400 border-gray-500/20',
+const roleConfig: Record<UserRole, string> = {
+  ADMIN:  'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  PRO:    'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  CLIENT: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
 };
 
 const avatarGradients = [
@@ -61,50 +35,44 @@ const avatarGradients = [
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const getGradient  = (id: string) => avatarGradients[parseInt(id) % avatarGradients.length];
-const getInitials  = (name: string) => name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-const formatDate   = (d: Date) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-const timeAgo      = (d: Date) => {
-  const diff = Date.now() - d.getTime();
-  const m = Math.floor(diff / 60000), h = Math.floor(diff / 3600000), day = Math.floor(diff / 86400000);
-  if (m < 60) return `${m}m ago`;
-  if (h < 24) return `${h}h ago`;
-  return `${day}d ago`;
+const getGradient = (id: string) => avatarGradients[id.charCodeAt(0) % avatarGradients.length];
+const getInitials = (fullName?: string, email?: string) => {
+  const name = fullName || email || 'U';
+  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+};
+const formatDate = (dateStr: string) => {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
 // ─── User Detail Panel ────────────────────────────────────────────────────────
-function UserPanel({ user, onClose }: { user: User; onClose: () => void }) {
-  const status   = statusConfig[user.status];
+function UserPanel({ user, onClose, onStatusChange }: { user: User; onClose: () => void; onStatusChange: (status: UserStatus) => void }) {
+  const status = statusConfig[user.status];
   const gradient = getGradient(user.id);
 
   return (
     <div className="flex flex-col h-full animate-in slide-in-from-right-4 fade-in duration-200">
-
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
         <div className="flex items-center gap-2">
           <UserCircle2 className="w-4 h-4 text-gray-500" />
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">User Details</span>
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Détails Utilisateur</span>
         </div>
-        <button
-          onClick={onClose}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-colors"
-        >
+        <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-white hover:bg-white/10 transition-colors">
           <X className="w-4 h-4" />
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
-
         {/* Identity block */}
         <div className="px-5 pb-5 border-b border-gray-800">
           <div className="flex flex-col items-center text-center gap-3">
             {/* Avatar */}
             <div className={`w-[72px] h-[72px] rounded-2xl bg-gradient-to-br ${gradient} border-2 flex items-center justify-center shadow-lg flex-shrink-0`}>
-              <span className="text-2xl font-black">{getInitials(user.name)}</span>
+              <span className="text-2xl font-black">{getInitials(user.full_name, user.email)}</span>
             </div>
             <div>
-              <h3 className="text-base font-bold text-white leading-snug">{user.name}</h3>
+              <h3 className="text-base font-bold text-white leading-snug">{user.full_name || user.email}</h3>
               <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
               {/* Badges */}
               <div className="flex items-center justify-center gap-2 mt-2.5 flex-wrap">
@@ -125,9 +93,9 @@ function UserPanel({ user, onClose }: { user: User; onClose: () => void }) {
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-3">Information</p>
           <div className="space-y-2">
             {[
-              { icon: Calendar, label: 'Joined',     value: formatDate(user.joinDate) },
-              { icon: MapPin,   label: 'Location',   value: user.location ?? 'Not specified' },
-              { icon: Clock,    label: 'Last Login',  value: user.lastLogin ? timeAgo(user.lastLogin) : 'Never' },
+              { icon: Calendar, label: 'Créé le',     value: formatDate(user.created_at) },
+              { icon: MapPin,   label: 'Ville',       value: user.city ?? 'Non spécifié' },
+              { icon: Mail,     label: 'Téléphone',   value: user.phone ?? 'Non spécifié' },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-center gap-3 py-1">
                 <div className="w-8 h-8 rounded-lg bg-gray-800 border border-gray-700/50 flex items-center justify-center flex-shrink-0">
@@ -142,60 +110,54 @@ function UserPanel({ user, onClose }: { user: User; onClose: () => void }) {
           </div>
         </div>
 
-        {/* Activity */}
+        {/* Dates detailed */}
         <div className="px-5 py-4 border-b border-gray-800">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-3">Activity</p>
-          <div className="space-y-2.5">
-            {/* Score */}
-            <div className="bg-gray-800/60 border border-gray-700/40 rounded-xl px-4 py-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5 text-blue-400" />
-                  <span className="text-xs text-gray-400 font-medium">Activity Score</span>
-                </div>
-                <span className={`text-sm font-bold ${user.activityScore >= 80 ? 'text-green-400' : user.activityScore >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
-                  {user.activityScore}%
-                </span>
-              </div>
-              <div className="w-full bg-gray-700/80 rounded-full h-1.5">
-                <div
-                  className={`rounded-full h-1.5 transition-all ${user.activityScore >= 80 ? 'bg-green-500' : user.activityScore >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                  style={{ width: `${user.activityScore}%` }}
-                />
-              </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-gray-600 font-semibold uppercase tracking-wide">Créé le</span>
+              <span className="text-sm text-gray-300 font-medium">{formatDate(user.created_at)}</span>
             </div>
-            {/* Reviews */}
-            <div className="bg-gray-800/60 border border-gray-700/40 rounded-xl px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-xs text-gray-400 font-medium">Reviews Written</span>
-              </div>
-              <span className="text-sm font-bold text-emerald-400">{user.reviews ?? 0}</span>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-gray-600 font-semibold uppercase tracking-wide">Mise à jour</span>
+              <span className="text-sm text-gray-300 font-medium">{formatDate(user.updated_at)}</span>
             </div>
           </div>
         </div>
 
         {/* Action buttons */}
-        <div className="px-5 py-4 space-y-2">
+        <div className="px-5 py-4 space-y-2 border-b border-gray-800">
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-3">Actions</p>
 
           <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white text-sm font-semibold transition-all duration-150 group shadow-lg shadow-indigo-900/40">
             <UserCircle2 className="w-4 h-4 flex-shrink-0" />
-            <span className="flex-1 text-left">Visit Profile</span>
+            <span className="flex-1 text-left">Voir Profil</span>
             <ChevronRight className="w-4 h-4 opacity-60 group-hover:translate-x-0.5 transition-transform" />
           </button>
 
           <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white text-sm font-semibold transition-all duration-150 group shadow-lg shadow-blue-900/40">
             <Mail className="w-4 h-4 flex-shrink-0" />
-            <span className="flex-1 text-left">Contact User</span>
+            <span className="flex-1 text-left">Contacter</span>
             <ChevronRight className="w-4 h-4 opacity-60 group-hover:translate-x-0.5 transition-transform" />
           </button>
+        </div>
 
-          <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border border-gray-700 bg-gray-800/60 hover:bg-red-500/15 hover:border-red-500/40 text-red-400 hover:text-red-300 text-sm font-semibold transition-all duration-150 group active:scale-[0.98]">
-            <ShieldBan className="w-4 h-4 flex-shrink-0" />
-            <span className="flex-1 text-left">{user.status === 'banned' ? 'Unban User' : 'Block User'}</span>
-            <ChevronRight className="w-4 h-4 opacity-60 group-hover:translate-x-0.5 transition-transform" />
-          </button>
+        {/* Status Actions */}
+        <div className="px-5 py-4">
+          <div className="space-y-2">
+            <p className="text-xs text-gray-500 uppercase font-semibold mb-3">Changer le statut</p>
+            {(['active', 'inactive', 'suspended', 'banned'] as const).map(st => (
+              <button
+                key={st}
+                onClick={() => {
+                  onStatusChange(st);
+                  onClose();
+                }}
+                className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded border border-gray-700 transition-colors"
+              >
+                {statusConfig[st].label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="h-2" />
@@ -206,227 +168,195 @@ function UserPanel({ user, onClose }: { user: User; onClose: () => void }) {
 
 // ─── Sort Icon helper ─────────────────────────────────────────────────────────
 function SortIcon({ col, sortKey, dir }: { col: string; sortKey: string; dir: 'asc'|'desc' }) {
-  if (sortKey !== col) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-30" />;
-  return dir === 'asc' ? <ArrowUp className="w-3 h-3 ml-1 text-primary" /> : <ArrowDown className="w-3 h-3 ml-1 text-primary" />;
+  if (sortKey !== col) return null;
+  return null;
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function UsersPage() {
-  const [sortKey,       setSortKey]       = useState<keyof User>('joinDate');
-  const [sortDir,       setSortDir]       = useState<'asc'|'desc'>('desc');
-  const [search,        setSearch]        = useState('');
-  const [statusFilter,  setStatusFilter]  = useState('all');
-  const [selected,      setSelected]      = useState<User | null>(null);
+  const { users, isLoading, error, metrics, fetchUsers, updateUserStatus } = useUsers();
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
 
-  const handleSort = (key: keyof User) => {
-    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    else { setSortKey(key); setSortDir('asc'); }
+  // Charger les utilisateurs au montage
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  // Filtrer les utilisateurs
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = searchTerm === '' || 
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+    
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  const handleStatusChange = (status: UserStatus) => {
+    if (selectedUser) {
+      updateUserStatus(selectedUser.id, status)
+        .then(() => {
+          setSelectedUser(prev => prev ? { ...prev, status } : null);
+        })
+        .catch(err => console.error('Erreur:', err));
+    }
   };
 
-  const rows = mockUsers
-    .filter(u =>
-      (u.name.toLowerCase().includes(search.toLowerCase()) ||
-       u.email.toLowerCase().includes(search.toLowerCase())) &&
-      (statusFilter === 'all' || u.status === statusFilter)
-    )
-    .sort((a, b) => {
-      const av = a[sortKey], bv = b[sortKey];
-      if (av == null) return 1; if (bv == null) return -1;
-      if (av < bv) return sortDir === 'asc' ? -1 : 1;
-      if (av > bv) return sortDir === 'asc' ? 1 : -1;
-      return 0;
-    });
-
   return (
-    <div className="space-y-6">
-
-      {/* ── Page header ── */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Users</h1>
-          <p className="text-muted-foreground text-sm mt-1">Manage and monitor all platform users</p>
-        </div>
-        <Button size="sm" className="gap-2">
-          <Plus className="w-4 h-4" /> Add User
-        </Button>
-      </div>
-
-      {/* ── Stat cards ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: 'Total Users', value: mockUsers.length,                                   color: 'text-foreground' },
-          { label: 'Active',      value: mockUsers.filter(u => u.status === 'active').length,    color: 'text-green-400' },
-          { label: 'Suspended',   value: mockUsers.filter(u => u.status === 'suspended').length, color: 'text-yellow-400' },
-          { label: 'Banned',      value: mockUsers.filter(u => u.status === 'banned').length,    color: 'text-red-400' },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="bg-card border border-border rounded-xl p-4">
-            <p className="text-xs text-muted-foreground">{label}</p>
-            <p className={`text-2xl font-bold mt-0.5 ${color}`}>{value}</p>
+    <div className="flex h-screen bg-gray-950">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Bar */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 flex-shrink-0">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Utilisateurs</h1>
+            <p className="text-sm text-gray-500 mt-1">{filteredUsers.length} utilisateur{filteredUsers.length !== 1 ? 's' : ''} trouvé{filteredUsers.length !== 1 ? 's' : ''}</p>
           </div>
-        ))}
+          <Button className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 mr-2" />
+            Ajouter
+          </Button>
+        </div>
+
+        {/* Metrics Bar */}
+        <div className="px-6 py-4 border-b border-gray-800 bg-gray-900/50 flex gap-4 flex-shrink-0">
+          <div className="flex-1">
+            <p className="text-xs text-gray-500 uppercase font-semibold">Total</p>
+            <p className="text-2xl font-bold text-white">{metrics.totalUsers}</p>
+          </div>
+          <div className="flex-1">
+            <p className="text-xs text-gray-500 uppercase font-semibold">Actifs</p>
+            <p className="text-2xl font-bold text-green-400">{metrics.activeUsers}</p>
+          </div>
+          <div className="flex-1">
+            <p className="text-xs text-gray-500 uppercase font-semibold">Clients</p>
+            <p className="text-2xl font-bold text-blue-400">{metrics.clientUsers}</p>
+          </div>
+          <div className="flex-1">
+            <p className="text-xs text-gray-500 uppercase font-semibold">Pro</p>
+            <p className="text-2xl font-bold text-purple-400">{metrics.proUsers}</p>
+          </div>
+          <div className="flex-1">
+            <p className="text-xs text-gray-500 uppercase font-semibold">Admin</p>
+            <p className="text-2xl font-bold text-orange-400">{metrics.adminUsers}</p>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="px-6 py-4 border-b border-gray-800 flex gap-2 flex-shrink-0 flex-wrap">
+          <div className="flex-1 min-w-64 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
+            <input
+              type="text"
+              placeholder="Rechercher par email ou nom..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-800 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          
+          <select
+            value={roleFilter}
+            onChange={e => setRoleFilter(e.target.value as any)}
+            className="px-4 py-2 bg-gray-900 border border-gray-800 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="all">Tous les rôles</option>
+            <option value="CLIENT">Client</option>
+            <option value="PRO">Pro</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value as any)}
+            className="px-4 py-2 bg-gray-900 border border-gray-800 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="all">Tous les statut</option>
+            <option value="active">Actif</option>
+            <option value="inactive">Inactif</option>
+            <option value="suspended">Suspendu</option>
+            <option value="banned">Bannis</option>
+          </select>
+        </div>
+
+        {/* Users List */}
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+          {isLoading && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="w-8 h-8 border-2 border-gray-700 border-t-blue-500 rounded-full animate-spin mx-auto mb-2" />
+                <p className="text-gray-500">Chargement...</p>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="p-4 m-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
+
+          {!isLoading && filteredUsers.length === 0 && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <UserCircle2 className="w-16 h-16 text-gray-700 mx-auto mb-3" />
+                <p className="text-gray-500">Aucun utilisateur trouvé</p>
+              </div>
+            </div>
+          )}
+
+          {!isLoading && filteredUsers.length > 0 && (
+            <div>
+              {filteredUsers.map(user => {
+                const status = statusConfig[user.status];
+                const gradient = getGradient(user.id);
+                return (
+                  <div
+                    key={user.id}
+                    onClick={() => setSelectedUser(user)}
+                    className="px-4 py-3 border-b border-gray-800/50 hover:bg-gray-900/30 cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 flex items-center justify-center rounded-lg border text-xs font-semibold flex-shrink-0 bg-gradient-to-br ${gradient}`}>
+                        {getInitials(user.full_name, user.email)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="text-sm font-semibold text-white truncate">{user.full_name || user.email}</h4>
+                          <span className={`text-xs px-2 py-0.5 rounded border whitespace-nowrap ${roleConfig[user.role]}`}>
+                            {user.role}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className={`w-2 h-2 rounded-full ${status.dot}`} />
+                        <ChevronRight className="w-4 h-4 text-gray-600" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* ── Search + filter bar ── */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search by name or email..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full bg-card border border-border rounded-lg pl-10 pr-4 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30 transition"
+      {/* Side Panel */}
+      {selectedUser && (
+        <div className="w-96 border-l border-gray-800 bg-gray-900 flex flex-col">
+          <UserPanel
+            user={selectedUser}
+            onClose={() => setSelectedUser(null)}
+            onStatusChange={handleStatusChange}
           />
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {(['all','active','suspended','banned','inactive'] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all capitalize ${
-                statusFilter === s
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground'
-              }`}
-            >
-              {s === 'all' ? 'All' : s}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Table + panel ── */}
-      <div className="flex gap-4 items-start">
-
-        {/* Table */}
-        <div className="flex-1 min-w-0 bg-card border border-border rounded-xl overflow-hidden">
-
-          {/* Column headers */}
-          <div className="grid grid-cols-12 px-4 py-3 border-b border-border bg-muted/30">
-            {/* Name */}
-            <button onClick={() => handleSort('name')} className="col-span-3 flex items-center text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
-              Name <SortIcon col="name" sortKey={sortKey} dir={sortDir} />
-            </button>
-            {/* Email */}
-            <button onClick={() => handleSort('email')} className="col-span-3 hidden sm:flex items-center text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
-              Email <SortIcon col="email" sortKey={sortKey} dir={sortDir} />
-            </button>
-            {/* Role */}
-            <span className="col-span-2 hidden md:flex items-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role</span>
-            {/* Status */}
-            <button onClick={() => handleSort('status')} className="col-span-2 flex items-center text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
-              Status <SortIcon col="status" sortKey={sortKey} dir={sortDir} />
-            </button>
-            {/* Joined */}
-            <button onClick={() => handleSort('joinDate')} className="col-span-1 hidden lg:flex items-center text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
-              Joined <SortIcon col="joinDate" sortKey={sortKey} dir={sortDir} />
-            </button>
-            {/* Activity */}
-            <button onClick={() => handleSort('activityScore')} className="col-span-1 flex items-center justify-end text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
-              Act. <SortIcon col="activityScore" sortKey={sortKey} dir={sortDir} />
-            </button>
-          </div>
-
-          {/* Rows */}
-          <div className="divide-y divide-border">
-            {rows.length === 0 ? (
-              <div className="py-12 text-center text-sm text-muted-foreground">No users found.</div>
-            ) : rows.map(user => {
-              const isActive = selected?.id === user.id;
-              const status   = statusConfig[user.status];
-              const gradient = getGradient(user.id);
-
-              return (
-                <div
-                  key={user.id}
-                  onClick={() => setSelected(isActive ? null : user)}
-                  className={`grid grid-cols-12 px-4 py-3.5 cursor-pointer transition-all duration-150 select-none ${
-                    isActive
-                      ? 'bg-indigo-500/10 border-l-[3px] border-l-indigo-500'
-                      : 'hover:bg-muted/40 border-l-[3px] border-l-transparent'
-                  }`}
-                >
-                  {/* Name */}
-                  <div className="col-span-3 flex items-center gap-3 min-w-0">
-                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${gradient} border flex items-center justify-center flex-shrink-0`}>
-                      <span className="text-[11px] font-black">{getInitials(user.name)}</span>
-                    </div>
-                    <div className="min-w-0">
-                      <p className={`text-sm font-semibold truncate ${isActive ? 'text-indigo-300' : 'text-foreground'}`}>
-                        {user.name}
-                      </p>
-                      {user.lastLogin && (
-                        <p className="text-[11px] text-muted-foreground">{timeAgo(user.lastLogin)}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Email */}
-                  <div className="col-span-3 hidden sm:flex items-center">
-                    <span className="text-xs text-muted-foreground truncate">{user.email}</span>
-                  </div>
-
-                  {/* Role */}
-                  <div className="col-span-2 hidden md:flex items-center">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border capitalize ${roleConfig[user.role]}`}>
-                      {user.role}
-                    </span>
-                  </div>
-
-                  {/* Status */}
-                  <div className="col-span-2 flex items-center">
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-1 rounded-full border ${status.badge}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
-                      {status.label}
-                    </span>
-                  </div>
-
-                  {/* Joined */}
-                  <div className="col-span-1 hidden lg:flex items-center">
-                    <span className="text-xs text-muted-foreground">{formatDate(user.joinDate)}</span>
-                  </div>
-
-                  {/* Activity */}
-                  <div className="col-span-1 flex items-center justify-end gap-1.5">
-                    <div className="hidden sm:block w-8 bg-muted rounded-full h-1.5">
-                      <div
-                        className={`rounded-full h-1.5 ${user.activityScore >= 80 ? 'bg-green-500' : user.activityScore >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                        style={{ width: `${user.activityScore}%` }}
-                      />
-                    </div>
-                    <span className={`text-xs font-bold ${user.activityScore >= 80 ? 'text-green-400' : user.activityScore >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
-                      {user.activityScore}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Footer */}
-          <div className="px-4 py-3 border-t border-border bg-muted/20 flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">
-              Showing <span className="font-semibold text-foreground">{rows.length}</span> of{' '}
-              <span className="font-semibold text-foreground">{mockUsers.length}</span> users
-            </span>
-            {selected && (
-              <span className="text-xs text-indigo-400 font-medium animate-in fade-in duration-200">
-                ← Click row again to close panel
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* ── Detail panel ── */}
-        {selected && (
-          <div
-            className="w-72 flex-shrink-0 rounded-xl shadow-2xl overflow-hidden"
-            style={{ background: '#0f1117', border: '1px solid #1e2330' }}
-          >
-            <UserPanel user={selected} onClose={() => setSelected(null)} />
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

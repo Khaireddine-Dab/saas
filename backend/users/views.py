@@ -5,20 +5,54 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.settings import api_settings
 
-from supabase import create_client, Client
+import uuid
+
+from supabase import create_client
 from django.conf import settings as django_settings
+from django.db import connection
+from django.db.utils import DatabaseError
 
 from .models import User
 from .serializers import UserSerializer, SignupSerializer, LoginSerializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
-def get_supabase_client() -> Client:
+def get_supabase_client():
     """Retourne un client Supabase Admin (service role)."""
     return create_client(
         django_settings.SUPABASE_URL,
         django_settings.SUPABASE_SERVICE_KEY,
     )
+
+
+def sync_signup_user_as_admin(supabase, user_uuid) -> None:
+    """
+    Après auth.users, un trigger Supabase insère souvent public.users / public.profiles
+    avec role = CLIENT. On force ADMIN côté SQL (même connexion que l’ORM) et on aligne
+    profiles (rôle texte souvent en minuscules : admin).
+    """
+    uid = str(uuid.UUID(str(user_uuid)))
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "UPDATE public.users SET role = %s WHERE id = %s::uuid",
+            [User.Role.ADMIN, uid],
+        )
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE public.profiles SET role = %s WHERE id = %s::uuid",
+                ["admin", uid],
+            )
+    except DatabaseError:
+        pass
+    try:
+        supabase.table("users").update({"role": User.Role.ADMIN}).eq("id", uid).execute()
+    except Exception:
+        pass
+    try:
+        supabase.table("profiles").update({"role": "admin"}).eq("id", uid).execute()
+    except Exception:
+        pass
 
 
 def get_tokens_for_user(user):
@@ -69,6 +103,7 @@ class SignupView(APIView):
                 'email': email,
                 'password': password,
                 'email_confirm': True,  # confirmer directement sans email
+                'user_metadata': {'role': User.Role.ADMIN}
             })
         except Exception as e:
             return Response(
@@ -83,19 +118,22 @@ class SignupView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        user_uuid = auth_user.id  # UUID retourné par auth.users
+        user_uuid = uuid.UUID(str(auth_user.id))  # aligné sur auth.users / PK Postgres
 
-        # 2. Insérer / mettre à jour dans public.users avec role ADMIN
+        # 2. Insérer / mettre à jour dans public.users — rôle ADMIN par défaut pour l’inscription dashboard
         try:
-            user, created = User.objects.update_or_create(
+            user, _created = User.objects.update_or_create(
                 id=user_uuid,
                 defaults={
                     'email': email,
                     'full_name': full_name,
                     'phone': phone,
                     'role': User.Role.ADMIN,
+                    'status': User.Status.ACTIVE,
                 }
             )
+            sync_signup_user_as_admin(supabase, user_uuid)
+            user.refresh_from_db()
         except Exception as e:
             # Nettoyer : supprimer l'utilisateur auth créé si l'insert échoue
             try:
@@ -160,9 +198,14 @@ class LoginView(APIView):
                 {'error': 'Utilisateur introuvable dans la base de données.'},
                 status=status.HTTP_404_NOT_FOUND
             )
+        except DatabaseError as db_err:
+            return Response(
+                {'error': f'Erreur de connexion à la base de données. Veuillez réessayer.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
-        # Vérifier que le rôle est ADMIN
-        if user.role != User.Role.ADMIN:
+        # Vérifier que le rôle est ADMIN (insensible à la casse vs valeur en base)
+        if str(user.role or "").upper() != User.Role.ADMIN:
             return Response(
                 {'error': 'Accès refusé. Seuls les administrateurs peuvent se connecter.'},
                 status=status.HTTP_403_FORBIDDEN
@@ -223,7 +266,7 @@ class AddUserView(APIView):
         password = request.data.get('password')
         full_name = request.data.get('full_name', '')
         phone = request.data.get('phone', '')
-        role = request.data.get('role', User.Role.CLIENT)
+        role = request.data.get('role', User.Role.ADMIN)
 
         if not email or not password:
             return Response(
@@ -247,6 +290,7 @@ class AddUserView(APIView):
                 'email': email,
                 'password': password,
                 'email_confirm': True,
+                'user_metadata': {'role': role.upper()}
             })
         except Exception as e:
             return Response(

@@ -97,7 +97,12 @@ export default function OrdersPage() {
   const [dateFrom,       setDateFrom]       = useState('');
   const [dateTo,         setDateTo]         = useState('');
 
-  const { orders, metrics } = useOrders({ status: statusFilter });
+  const { orders, metrics, fetchOrders } = useOrders({ status: statusFilter });
+
+  // Charger les commandes au montage
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   // Unique values for datalist suggestions
   const uniqueCustomers = [...new Set(orders.map(o => o.userName))].sort();
@@ -210,8 +215,8 @@ export default function OrdersPage() {
         {[
           { label: 'Total Orders',    value: metrics.totalOrders,                   color: 'text-foreground',  sub: 'All time' },
           { label: 'Pending',         value: metrics.pendingOrders,                 color: 'text-yellow-500',  sub: 'Awaiting approval' },
-          { label: 'Avg Order Value', value: `$${metrics.avgOrderValue.toFixed(2)}`,color: 'text-foreground',  sub: 'Per transaction' },
-          { label: 'Total Revenue',   value: `$${(metrics.totalRevenue/1000).toFixed(1)}K`, color: 'text-green-500', sub: 'All orders' },
+          { label: 'Avg Order Value', value: `$${(metrics?.avgOrderValue || 0).toFixed(2)}`,color: 'text-foreground',  sub: 'Per transaction' },
+          { label: 'Total Revenue',   value: `$${((metrics?.totalRevenue || 0)/1000).toFixed(1)}K`, color: 'text-green-500', sub: 'All orders' },
         ].map(({ label, value, color, sub }) => (
           <Card key={label} className="p-4">
             <div className="text-xs text-muted-foreground font-medium">{label}</div>
@@ -427,7 +432,7 @@ export default function OrdersPage() {
                           {order.businessName}
                         </td>
                         <td className="px-4 py-3.5 text-center font-semibold text-sm text-foreground">
-                          ${order.totalAmount.toFixed(2)}
+                          ${(order?.totalAmount || 0).toFixed(2)}
                         </td>
                         <td className="px-4 py-3.5 text-center">
                           <Badge className={statusColors[order.status]}>

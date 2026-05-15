@@ -34,9 +34,4 @@ class JWTAuthentication(BaseAuthentication):
         except User.DoesNotExist:
             raise AuthenticationFailed('Utilisateur non trouvé.')
 
-        # Comparaison plus robuste du rôle
-        current_role = str(user.role).upper()
-        if current_role != "ADMIN":
-            raise AuthenticationFailed(f"Accès réservé aux administrateurs (Rôle actuel: {current_role}).")
-
         return (user, token)

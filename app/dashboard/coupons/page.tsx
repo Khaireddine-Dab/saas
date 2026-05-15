@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Download, Filter, Plus, Search, Tag, X } from 'lucide-react';
 import { useCoupons } from '@/hooks/useCoupons';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,7 @@ export default function CouponsPage() {
   const [statusFilter, setStatusFilter] = useState<CouponStatus | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const [formData, setFormData] = useState<CouponFormData>({
     code: '',
     discountType: 'percentage',
@@ -48,6 +49,19 @@ export default function CouponsPage() {
     isPrivate: false,
   });
   const { coupons, statistics } = useCoupons({ status: statusFilter, search: searchQuery });
+
+  // Prevent hydration error by only rendering dynamic content on client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const displayStats = isClient ? statistics : {
+    totalCoupons: 0,
+    activeCoupons: 0,
+    totalUsages: 0,
+    totalDiscountGiven: 0,
+    mostUsedCoupon: null,
+  };
 
   const handleCreateCoupon = () => {
     console.log('[v0] Creating coupon:', formData);
@@ -91,22 +105,22 @@ export default function CouponsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Total Coupons</div>
-          <div className="text-2xl font-bold text-foreground">{statistics.totalCoupons}</div>
+          <div className="text-2xl font-bold text-foreground">{displayStats.totalCoupons}</div>
           <div className="text-xs text-muted-foreground mt-1">All coupons</div>
         </Card>
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Active</div>
-          <div className="text-2xl font-bold text-green-500">{statistics.activeCoupons}</div>
+          <div className="text-2xl font-bold text-green-500">{displayStats.activeCoupons}</div>
           <div className="text-xs text-muted-foreground mt-1">Currently active</div>
         </Card>
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Total Usages</div>
-          <div className="text-2xl font-bold text-foreground">{statistics.totalUsages}</div>
+          <div className="text-2xl font-bold text-foreground">{displayStats.totalUsages}</div>
           <div className="text-xs text-muted-foreground mt-1">Times redeemed</div>
         </Card>
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Discount Given</div>
-          <div className="text-2xl font-bold text-foreground">${(statistics.totalDiscountGiven / 1000).toFixed(1)}K</div>
+          <div className="text-2xl font-bold text-foreground">${(displayStats.totalDiscountGiven / 1000).toFixed(1)}K</div>
           <div className="text-xs text-muted-foreground mt-1">Total value</div>
         </Card>
       </div>

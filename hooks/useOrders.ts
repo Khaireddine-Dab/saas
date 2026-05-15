@@ -1,61 +1,132 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ordersApi } from '@/lib/api';
+import { mapBackendOrderToFrontend, mapBackendOrdersToFrontend } from '@/lib/order-mapper';
 import type { Order, OrderFilter, OrderMetrics } from '@/types/order';
 
-// Mock data generator
-const generateMockOrders = (count: number): Order[] => {
-  const statuses = ['pending', 'approved', 'processing', 'shipped', 'delivered', 'cancelled'] as const;
-  const paymentStatuses = ['pending', 'paid', 'failed', 'refunded'] as const;
-  
-  return Array.from({ length: count }, (_, i) => ({
-    id: `order-${i + 1}`,
-    orderId: `ORD-${String(i + 1).padStart(6, '0')}`,
-    userId: `user-${Math.floor(Math.random() * 100)}`,
-    userName: `Customer ${i + 1}`,
-    userEmail: `customer${i + 1}@example.com`,
-    businessId: `business-${Math.floor(Math.random() * 50)}`,
-    businessName: `Seller ${Math.floor(Math.random() * 50) + 1}`,
-    totalAmount: Math.floor(Math.random() * 5000) + 100,
-    items: [
-      {
-        id: `item-1`,
-        productId: `product-${Math.floor(Math.random() * 1000)}`,
-        productName: `Product ${Math.floor(Math.random() * 100)}`,
-        quantity: Math.floor(Math.random() * 5) + 1,
-        price: Math.floor(Math.random() * 500) + 10,
-        total: Math.floor(Math.random() * 2500) + 50,
-      },
-    ],
-    status: statuses[Math.floor(Math.random() * statuses.length)],
-    paymentStatus: paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)],
-    paymentMethod: ['credit_card', 'debit_card', 'wallet', 'bank_transfer'][Math.floor(Math.random() * 4)],
-    shippingAddress: {
-      street: `${Math.floor(Math.random() * 999)} Main Street`,
-      city: 'New York',
-      state: 'NY',
-      postalCode: '10001',
-      country: 'USA',
-    },
-    billingAddress: {
-      street: `${Math.floor(Math.random() * 999)} Main Street`,
-      city: 'New York',
-      state: 'NY',
-      postalCode: '10001',
-      country: 'USA',
-    },
-    createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-    updatedAt: new Date(),
-    timeline: [],
-    notes: Math.random() > 0.7 ? 'Requires review' : '',
-    requiresManualApproval: Math.random() > 0.85,
-  }));
-};
+interface UseOrdersReturn {
+  orders: Order[];
+  allOrders: Order[];
+  isLoading: boolean;
+  error: string | null;
+  metrics: OrderMetrics;
+  fetchOrders: () => Promise<void>;
+  fetchOrderById: (id: number | string) => Promise<Order>;
+  updateOrderStatus: (orderId: number | string, status: string) => Promise<Order>;
+  updateOrder: (orderId: number | string, data: any) => Promise<Order>;
+  deleteOrder: (orderId: number | string) => Promise<void>;
+  createOrder: (data: any) => Promise<Order>;
+  getOrdersByStore: (storeId: number | string) => Promise<Order[]>;
+}
 
-export function useOrders(filters?: OrderFilter) {
-  const [orders] = useState<Order[]>(() => generateMockOrders(50));
-  const [isLoading] = useState(false);
+export function useOrders(filters?: OrderFilter): UseOrdersReturn {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Fetch all orders
+  const fetchOrders = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await ordersApi.getAll();
+      const mappedOrders = mapBackendOrdersToFrontend(Array.isArray(data) ? data : []);
+      setOrders(mappedOrders);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors du chargement des commandes';
+      setError(message);
+      console.error('Error fetching orders:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch order by ID
+  const fetchOrderById = useCallback(async (id: number | string): Promise<Order> => {
+    setError(null);
+    try {
+      const data = await ordersApi.getById(id);
+      return mapBackendOrderToFrontend(data);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors du chargement de la commande';
+      setError(message);
+      throw err;
+    }
+  }, []);
+
+  // Get orders by store
+  const getOrdersByStore = useCallback(async (storeId: number | string): Promise<Order[]> => {
+    setError(null);
+    try {
+      const data = await ordersApi.getByStore(storeId);
+      return mapBackendOrdersToFrontend(Array.isArray(data) ? data : []);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors du chargement des commandes du magasin';
+      setError(message);
+      throw err;
+    }
+  }, []);
+
+  // Update order status
+  const updateOrderStatus = useCallback(async (orderId: number | string, status: string): Promise<Order> => {
+    setError(null);
+    try {
+      const response = await ordersApi.updateStatus(orderId, status);
+      const updatedOrder = mapBackendOrderToFrontend(response);
+      setOrders(prev => prev.map(o => o.id === String(orderId) ? updatedOrder : o));
+      return updatedOrder;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors de la mise à jour du statut';
+      setError(message);
+      throw err;
+    }
+  }, []);
+
+  // Update full order
+  const updateOrder = useCallback(async (orderId: number | string, data: any): Promise<Order> => {
+    setError(null);
+    try {
+      const response = await ordersApi.update(orderId, data);
+      const updatedOrder = mapBackendOrderToFrontend(response);
+      setOrders(prev => prev.map(o => o.id === String(orderId) ? updatedOrder : o));
+      return updatedOrder;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors de la mise à jour de la commande';
+      setError(message);
+      throw err;
+    }
+  }, []);
+
+  // Delete order
+  const deleteOrder = useCallback(async (orderId: number | string) => {
+    setError(null);
+    try {
+      await ordersApi.delete(orderId);
+      setOrders(prev => prev.filter(o => o.id !== String(orderId)));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors de la suppression de la commande';
+      setError(message);
+      throw err;
+    }
+  }, []);
+
+  // Create order
+  const createOrder = useCallback(async (data: any): Promise<Order> => {
+    setError(null);
+    try {
+      const response = await ordersApi.create(data);
+      const newOrder = mapBackendOrderToFrontend(response);
+      setOrders(prev => [...prev, newOrder]);
+      return newOrder;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors de la création de la commande';
+      setError(message);
+      throw err;
+    }
+  }, []);
+
+  // Filter orders
   const filteredOrders = useMemo(() => {
     let result = orders;
 
@@ -75,10 +146,11 @@ export function useOrders(filters?: OrderFilter) {
     return result;
   }, [orders, filters]);
 
+  // Calculate metrics
   const metrics: OrderMetrics = useMemo(() => ({
     totalOrders: orders.length,
     pendingOrders: orders.filter(o => o.status === 'pending').length,
-    avgOrderValue: orders.reduce((sum, o) => sum + o.totalAmount, 0) / orders.length,
+    avgOrderValue: orders.length > 0 ? orders.reduce((sum, o) => sum + o.totalAmount, 0) / orders.length : 0,
     totalRevenue: orders.reduce((sum, o) => sum + o.totalAmount, 0),
     conversionRate: 3.2,
   }), [orders]);
@@ -86,7 +158,15 @@ export function useOrders(filters?: OrderFilter) {
   return {
     orders: filteredOrders,
     allOrders: orders,
-    metrics,
     isLoading,
+    error,
+    metrics,
+    fetchOrders,
+    fetchOrderById,
+    updateOrderStatus,
+    updateOrder,
+    deleteOrder,
+    createOrder,
+    getOrdersByStore,
   };
 }

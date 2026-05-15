@@ -24,6 +24,11 @@ class User(models.Model):
     city = models.TextField(null=True, blank=True)
     address = models.TextField(null=True, blank=True)
     email = models.EmailField(unique=True)
+    
+    # Platform Tracking
+    used_web = models.BooleanField(default=False)
+    used_mobile = models.BooleanField(default=False)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

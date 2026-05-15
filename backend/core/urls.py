@@ -23,6 +23,15 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/users/', include('users.urls')),
     path('api/stores/', include('stores.urls')),
-    path('api/products/', include('products.urls')),
+    path('api/items/', include('items.urls')),
+    path('api/products/', include('items.urls')),  # Backward compatibility
     path('api/orders/', include('orders.urls')),
+    # path('api/drivers/', include('drivers.urls')),
+    path('api/reviews/', include('reviews.urls')),
+    path('api/promotions/', include('promotions.urls')),
+    path('api/banners/', include('banners.urls')),
+    path('api/transactions/', include('transactions.urls')),
+    path('api/support/', include('support.urls')),
+    path('api/fraud/', include('fraud.urls')),
+    path('api/bookings/', include('bookings.urls')),
 ]

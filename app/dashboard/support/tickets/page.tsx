@@ -1,60 +1,65 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Plus, MessageSquare, AlertCircle, Clock, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Plus, MessageSquare, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-
-const mockTickets = Array.from({ length: 25 }, (_, i) => ({
-  id: `TKT-${String(i + 1).padStart(6, '0')}`,
-  customerId: `cust-${Math.floor(i / 3) + 1}`,
-  customerName: `Customer ${Math.floor(i / 3) + 1}`,
-  subject: [
-    'Order not received',
-    'Product damaged',
-    'Wrong item shipped',
-    'Refund status',
-    'Payment issue',
-  ][i % 5],
-  priority: ['low', 'medium', 'high', 'critical'][i % 4] as any,
-  status: ['open', 'in_progress', 'waiting_customer', 'resolved'][i % 4] as any,
-  channel: ['email', 'chat', 'phone', 'social'][i % 4] as any,
-  assignedTo: i % 2 === 0 ? `Agent ${Math.floor(i / 2) + 1}` : 'Unassigned',
-  createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-  lastReply: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000),
-  messages: Math.floor(Math.random() * 10) + 1,
-}));
+import { supportApi } from '@/lib/api';
+import Link from 'next/link';
 
 const priorityColors = {
   low: 'bg-primary/20 text-primary border-primary/40',
   medium: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/40',
   high: 'bg-orange-500/20 text-orange-500 border-orange-500/40',
-  critical: 'bg-red-500/20 text-red-500 border-red-500/40',
+  urgent: 'bg-red-500/20 text-red-500 border-red-500/40',
 };
 
 const statusColors = {
   open: 'bg-green-500/20 text-green-500 border-green-500/40',
   in_progress: 'bg-primary/20 text-primary border-primary/40',
-  waiting_customer: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/40',
-  resolved: 'bg-muted text-muted-foreground border-border/50',
+  waiting: 'bg-orange-500/20 text-orange-500 border-orange-500/40',
+  resolved: 'bg-blue-500/20 text-blue-500 border-blue-500/40',
+  closed: 'bg-muted text-muted-foreground border-border/50',
 };
 
 export default function TicketsPage() {
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<string | undefined>();
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
 
-  const filteredTickets = mockTickets.filter(ticket => {
-    const matchesSearch = ticket.id.includes(searchQuery) || ticket.customerName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesPriority = !priorityFilter || ticket.priority === priorityFilter;
-    const matchesStatus = !statusFilter || ticket.status === statusFilter;
-    return matchesSearch && matchesPriority && matchesStatus;
+  useEffect(() => {
+    fetchTickets();
+  }, [priorityFilter, statusFilter]);
+
+  const fetchTickets = async () => {
+    setLoading(true);
+    try {
+      const filters: any = {};
+      if (priorityFilter) filters.priority = priorityFilter;
+      if (statusFilter) filters.status = statusFilter;
+      
+      const data = await supportApi.getTickets(filters);
+      setTickets(data);
+    } catch (error) {
+      console.error('Failed to fetch tickets:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredTickets = tickets.filter(ticket => {
+    const matchesSearch = 
+        ticket.ticket_number?.toString().includes(searchQuery) || 
+        ticket.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ticket.subject?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
   });
 
-  const openTickets = filteredTickets.filter(t => t.status === 'open').length;
-  const avgResponseTime = 2.5;
+  const openTickets = tickets.filter(t => t.status === 'open').length;
 
   return (
     <div className="space-y-6">
@@ -78,23 +83,11 @@ export default function TicketsPage() {
           <div className="text-xs text-muted-foreground mt-1">Pending response</div>
         </Card>
         <Card className="p-4">
-          <div className="text-sm text-muted-foreground">In Progress</div>
+          <div className="text-sm text-muted-foreground">Total Active</div>
           <div className="text-2xl font-bold text-primary">
-            {filteredTickets.filter(t => t.status === 'in_progress').length}
+            {tickets.filter(t => t.status !== 'closed').length}
           </div>
           <div className="text-xs text-muted-foreground mt-1">Being handled</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-sm text-muted-foreground">Resolved</div>
-          <div className="text-2xl font-bold text-green-500">
-            {filteredTickets.filter(t => t.status === 'resolved').length}
-          </div>
-          <div className="text-xs text-muted-foreground mt-1">This month</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-sm text-muted-foreground">Avg Response Time</div>
-          <div className="text-2xl font-bold text-foreground">{avgResponseTime}h</div>
-          <div className="text-xs text-muted-foreground mt-1">To first reply</div>
         </Card>
       </div>
 
@@ -104,7 +97,7 @@ export default function TicketsPage() {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search by ticket ID or customer..."
+              placeholder="Search by ticket #, customer or subject..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -118,8 +111,7 @@ export default function TicketsPage() {
             <option value="">All Status</option>
             <option value="open">Open</option>
             <option value="in_progress">In Progress</option>
-            <option value="waiting_customer">Waiting Customer</option>
-            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
           </select>
           <select
             value={priorityFilter || ''}
@@ -130,7 +122,6 @@ export default function TicketsPage() {
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
-            <option value="critical">Critical</option>
           </select>
         </div>
       </Card>
@@ -141,32 +132,42 @@ export default function TicketsPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted border-b border-border">
               <tr>
-                <th className="px-6 py-3 text-left font-semibold">Ticket ID</th>
+                <th className="px-6 py-3 text-left font-semibold">Ticket #</th>
+                <th className="px-6 py-3 text-left font-semibold">Store</th>
                 <th className="px-6 py-3 text-left font-semibold">Customer</th>
                 <th className="px-6 py-3 text-left font-semibold">Subject</th>
                 <th className="px-6 py-3 text-left font-semibold">Channel</th>
                 <th className="px-6 py-3 text-left font-semibold">Priority</th>
                 <th className="px-6 py-3 text-left font-semibold">Status</th>
-                <th className="px-6 py-3 text-left font-semibold">Assigned To</th>
-                <th className="px-6 py-3 text-left font-semibold">Messages</th>
-                <th className="px-6 py-3 text-left font-semibold">Last Update</th>
+                <th className="px-6 py-3 text-left font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredTickets.map((ticket) => (
+              {loading ? (
+                <tr>
+                    <td colSpan={8} className="px-6 py-10 text-center text-muted-foreground">Loading tickets...</td>
+                </tr>
+              ) : filteredTickets.length === 0 ? (
+                <tr>
+                    <td colSpan={8} className="px-6 py-10 text-center text-muted-foreground">No tickets found.</td>
+                </tr>
+              ) : filteredTickets.map((ticket) => (
                 <tr key={ticket.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4 font-mono text-sm font-medium">{ticket.id}</td>
+                  <td className="px-6 py-4 font-mono text-sm font-medium">#{ticket.ticket_number}</td>
+                  <td className="px-6 py-4">{ticket.store_details?.name || 'Unknown Store'}</td>
                   <td className="px-6 py-4">
                     <div>
-                      <p className="font-semibold text-sm">{ticket.customerName}</p>
-                      <p className="text-xs text-muted-foreground">{ticket.customerId}</p>
+                      <p className="font-semibold text-sm">{ticket.customer_name || ticket.customer_details?.full_name || 'N/A'}</p>
                     </div>
                   </td>
                   <td className="px-6 py-4 max-w-xs">
                     <p className="text-sm truncate">{ticket.subject}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm capitalize">{ticket.channel}</span>
+                    <div className="flex items-center gap-2">
+                      {ticket.channel === 'chat' ? <MessageSquare className="w-4 h-4 text-primary" /> : <Phone className="w-4 h-4 text-primary" />}
+                      <span className="text-sm capitalize">{ticket.channel}</span>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <Badge className={priorityColors[ticket.priority as keyof typeof priorityColors]}>
@@ -179,16 +180,19 @@ export default function TicketsPage() {
                     </Badge>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm">{ticket.assignedTo}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1">
-                      <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-foreground">{ticket.messages}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {ticket.lastReply.toLocaleDateString()}
+                    {ticket.channel === 'chat' ? (
+                        <Link href={`/dashboard/support/chat?ticket_id=${ticket.id}`}>
+                            <Button size="sm" variant="default">
+                                <MessageSquare className="w-4 h-4 mr-2" />
+                                Open Chat
+                            </Button>
+                        </Link>
+                    ) : (
+                        <Button size="sm" variant="outline" disabled>
+                            <Phone className="w-4 h-4 mr-2" />
+                            Call Owner
+                        </Button>
+                    )}
                   </td>
                 </tr>
               ))}

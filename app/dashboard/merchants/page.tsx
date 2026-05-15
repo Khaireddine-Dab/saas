@@ -1,18 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Search, Plus, Filter, MoreVertical, Star, MapPin,
   Trash2, Ban, Package, ShieldCheck, X, Mail, Phone,
   Globe, TrendingUp, Calendar, Clock, ChevronRight,
   ExternalLink, ShieldBan, ShieldAlert, BadgeCheck,
-  DollarSign, BarChart2, AlertTriangle, Building2,
+  DollarSign, BarChart2, AlertTriangle, Building2, Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MerchantVerification } from '@/components/admin/merchant-verification';
+import { storesApi } from '@/lib/api';
+import { useProducts } from '@/hooks/useProducts';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Merchant {
@@ -36,37 +38,46 @@ interface Merchant {
   address: string;
 }
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const mockMerchants: Merchant[] = Array.from({ length: 15 }, (_, i) => ({
-  id: `merchant-${i + 1}`,
-  storeName: [
-    'Le Baroque Restaurant','Atlas Gym','Medina Hammam','Sidi Bou Said Café',
-    'Bardo Antiques','Carthage Tours','La Marsa Seafood','TechHub Sousse',
-    'Jasmine Boutique','Tunis Auto Parts','Green Garden Nursery','Nord Pharmacy',
-    'Sunset Hotel','Ariana Electronics','Ben Arous Bakery',
-  ][i],
-  ownerName: [
-    'Karim Mansour','Sami Trabelsi','Leila Boughanmi','Youssef Ayari',
-    'Hana Chaabane','Bilel Hamrouni','Rania Dridi','Nidhal Khelifi',
-    'Amira Sayadi','Mohamed Ltifi','Sara Gharbi','Walid Ezzine',
-    'Fatma Jebali','Tarek Zouari','Meriem Tlili',
-  ][i],
-  ownerEmail: `owner${i + 1}@example.com`,
-  businessType: ['restaurant','grocery','pharmacy'][i % 3],
-  status: (['active','verified','pending','active','suspended','verified','active','pending','active','verified','banned','active','pending','active','rejected'][i]) as Merchant['status'],
-  rating: (3.5 + (i % 2) * 1.5).toFixed(1),
-  reviewCount: Math.floor(Math.random() * 500) + 10,
-  totalOrders: Math.floor(Math.random() * 1000) + 100,
-  totalEarnings: Math.floor(Math.random() * 50000) + 5000,
-  accountBalance: Math.floor(Math.random() * 10000),
-  productCount: Math.floor(Math.random() * 250) + 20,
-  flaggedProducts: i % 4 === 0 ? Math.floor(Math.random() * 5) + 1 : 0,
-  createdAt: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-  joinedAt:  new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-  rne: `RNE-${Math.floor(Math.random() * 1000000)}`,
-  registrationNumber: `REG-${Math.floor(Math.random() * 1000000)}`,
-  address: ['Tunis, Tunisia','Sfax, Tunisia','Sousse, Tunisia','Djerba, Tunisia','Bizerte, Tunisia'][i % 5],
-}));
+// ─── Backend Data Mapper ──────────────────────────────────────────────────────
+const mapBackendStore = async (store: any, index: number): Promise<Merchant> => {
+  let productCount = 0;
+  try {
+    const products = await storesApi.getProducts(store.id);
+    productCount = products?.length || 0;
+  } catch (err) {
+    console.warn(`Failed to get products for store ${store.id}:`, err);
+  }
+
+  // Map backend status (PENDING/PUBLISHED/REJECTED) to UI status
+  let status: Merchant['status'] = 'pending';
+  switch (store.status) {
+    case 'PUBLISHED': status = 'active'; break;
+    case 'PENDING': status = 'pending'; break;
+    case 'REJECTED': status = 'rejected'; break;
+    default: status = 'pending';
+  }
+
+  return {
+    id: store.id.toString(),
+    storeName: store.name || 'Sans nom',
+    ownerName: store.owner_details?.full_name || 'Inconnu',
+    ownerEmail: store.owner_details?.email || store.email || '',
+    businessType: store.description || 'Non défini',
+    status,
+    rating: store.rating_average ? parseFloat(store.rating_average).toFixed(1) : '0.0',
+    reviewCount: store.total_reviews || 0,
+    totalOrders: store.total_orders || 0,
+    totalEarnings: 0, // Pas disponible dans le backend
+    accountBalance: 0, // Pas disponible dans le backend
+    productCount,
+    flaggedProducts: 0, // Pas disponible dans le backend
+    createdAt: new Date(store.created_at).toLocaleDateString(),
+    joinedAt: new Date(store.created_at).toLocaleDateString(),
+    rne: store.rne || 'N/A',
+    registrationNumber: `REG-${store.id}`,
+    address: store.address || `${store.city || ''}, Tunisia`,
+  };
+};
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const statusConfig: Record<Merchant['status'], { label: string; dot: string; badge: string }> = {
@@ -97,6 +108,103 @@ const getPanelGradient = (id: string) =>
 
 const getInitials = (name: string) =>
   name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+// ─── Product Manager Modal ────────────────────────────────────────────────────
+function ProductManagerModal({
+  merchantId,
+  merchantName,
+  onClose,
+}: {
+  merchantId: string;
+  merchantName: string;
+  onClose: () => void;
+}) {
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const storeId = parseInt(merchantId);
+        const data = await storesApi.getProducts(storeId);
+        setProducts(Array.isArray(data) ? data : []);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Erreur lors du chargement des produits';
+        setError(message);
+        console.error('Erreur:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [merchantId]);
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <Card className="relative w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="p-6 space-y-4 flex-1 overflow-y-auto">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-foreground">
+              Produits — {merchantName}
+            </h2>
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+                <p className="text-muted-foreground text-sm">Chargement des produits...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-red-400 text-sm">Erreur: {error}</p>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-8">
+              <Package className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+              <p className="text-muted-foreground">Aucun produit trouvé pour ce marchand</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <h3 className="font-semibold text-foreground text-sm">Produits ({products.length})</h3>
+              {products.map((p: any) => (
+                <div key={p.id} className="border border-border rounded-lg p-3 flex items-center justify-between bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">{p.name || 'Sans titre'}</p>
+                    <div className="flex gap-2 mt-1 text-xs">
+                      <span className="bg-primary/20 text-primary px-2 py-0.5 rounded">{p.category || 'Général'}</span>
+                      <span className="text-muted-foreground">{parseFloat(p.price || 0).toFixed(2)} TND</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors" title="Voir détails">
+                      <Package className="w-4 h-4" />
+                    </button>
+                    <button className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors" title="Supprimer">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="p-4 border-t bg-muted/30 flex justify-end">
+          <Button variant="outline" onClick={onClose}>Fermer</Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
 
 // ─── Detail Panel ─────────────────────────────────────────────────────────────
 function MerchantDetailPanel({
@@ -311,13 +419,43 @@ function MerchantDetailPanel({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function MerchantsPage() {
-  const [merchants,            setMerchants]            = useState<Merchant[]>(mockMerchants);
+  const [merchants,            setMerchants]            = useState<Merchant[]>([]);
+  const [loading,              setLoading]              = useState(true);
+  const [error,                setError]                = useState<string | null>(null);
   const [searchQuery,          setSearchQuery]          = useState('');
   const [statusFilter,         setStatusFilter]         = useState<string | undefined>();
   const [selectedMerchantId,   setSelectedMerchantId]   = useState<string | null>(null);
   const [panelMerchantId,      setPanelMerchantId]      = useState<string | null>(null);
   const [showProductManager,   setShowProductManager]   = useState(false);
   const [showVerificationModal,setShowVerificationModal]= useState(false);
+  const [actionLoading,        setActionLoading]        = useState<string | null>(null);
+
+  // Charger les merchant au montage du composant
+  useEffect(() => {
+    fetchMerchants();
+  }, []);
+
+  const fetchMerchants = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await storesApi.getAll();
+      
+      // Mapper les données du backend
+      const mapped = await Promise.all(
+        data.map((store: any, i: number) => mapBackendStore(store, i))
+      );
+      
+      setMerchants(mapped);
+    } catch (err: any) {
+      const errorMsg = err.message || 'Erreur lors du chargement des marchands';
+      setError(errorMsg);
+      console.error('Error fetching merchants:', err);
+      // Toast utile si vous avez sonner disponible
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredMerchants = merchants.filter(m => {
     const q = searchQuery.toLowerCase();
@@ -335,17 +473,42 @@ export default function MerchantsPage() {
   const handleStatusChange      = (id: string, status: Merchant['status']) =>
     setMerchants(prev => prev.map(m => m.id === id ? { ...m, status } : m));
 
-  const handleApproveKYC = () => {
+  const handleApproveKYC = async () => {
     if (!selectedMerchantId) return;
-    setMerchants(prev => prev.map(m => m.id === selectedMerchantId ? { ...m, status: 'verified' } : m));
-    setShowVerificationModal(false); setSelectedMerchantId(null);
+    setActionLoading(selectedMerchantId);
+    try {
+      const id = parseInt(selectedMerchantId);
+      await storesApi.validate(id);
+      // Mettre à jour l'état local
+      setMerchants(prev => prev.map(m => m.id === selectedMerchantId ? { ...m, status: 'verified' } : m));
+      setShowVerificationModal(false);
+      setSelectedMerchantId(null);
+      // Toast: toast.success('Merchant approved successfully');
+    } catch (err: any) {
+      console.error('Error approving merchant:', err);
+      // Toast: toast.error(err.message || 'Error approving merchant');
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const handleRejectKYC = (reason: string) => {
+  const handleRejectKYC = async (reason: string) => {
     if (!selectedMerchantId) return;
-    setMerchants(prev => prev.map(m => m.id === selectedMerchantId ? { ...m, status: 'rejected' } : m));
-    setShowVerificationModal(false); setSelectedMerchantId(null);
-    console.log('Rejected', selectedMerchantId, reason);
+    setActionLoading(selectedMerchantId);
+    try {
+      const id = parseInt(selectedMerchantId);
+      await storesApi.reject(id);
+      // Mettre à jour l'état local
+      setMerchants(prev => prev.map(m => m.id === selectedMerchantId ? { ...m, status: 'rejected' } : m));
+      setShowVerificationModal(false);
+      setSelectedMerchantId(null);
+      // Toast: toast.success('Merchant rejected successfully');
+    } catch (err: any) {
+      console.error('Error rejecting merchant:', err);
+      // Toast: toast.error(err.message || 'Error rejecting merchant');
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const kycData = selectedMerchant ? {
@@ -377,7 +540,23 @@ export default function MerchantsPage() {
         </Button>
       </div>
 
-      {/* KPI Cards */}
+      {/* Error State */}
+      {error && (
+        <Card className="p-4 bg-destructive/10 border-destructive/20">
+          <p className="text-destructive text-sm font-medium">{error}</p>
+          <Button variant="outline" size="sm" className="mt-2" onClick={fetchMerchants}>
+            Retry
+          </Button>
+        </Card>
+      )}
+
+      {/* Loading State */}
+      {loading ? (
+        <Card className="p-12 flex flex-col items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading merchants...</p>
+        </Card>
+      ) : ( <>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total Merchants', value: merchants.length,                                    sub: '+5 this month',   color: 'text-foreground',  subColor: 'text-green-500' },
@@ -581,47 +760,13 @@ export default function MerchantsPage() {
 
       {/* Product Management Modal */}
       {showProductManager && selectedMerchantId && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowProductManager(false); setSelectedMerchantId(null); }} />
-          <Card className="relative w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-foreground">
-                  Products — {merchants.find(m => m.id === selectedMerchantId)?.storeName}
-                </h2>
-                <button onClick={() => { setShowProductManager(false); setSelectedMerchantId(null); }} className="text-muted-foreground hover:text-foreground">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="space-y-2">
-                <h3 className="font-semibold text-foreground text-sm">Flagged Products (3)</h3>
-                {[
-                  { id: 'prod-1', name: 'Product 1 — Counterfeit Alert', category: 'Electronics', reason: 'Suspected Counterfeit' },
-                  { id: 'prod-2', name: 'Product 2 — Policy Violation',  category: 'Clothing',    reason: 'Policy Violation' },
-                  { id: 'prod-3', name: 'Product 3 — Quality Issue',     category: 'Home',        reason: 'Quality Control' },
-                ].map(p => (
-                  <div key={p.id} className="border border-destructive/20 rounded-lg p-3 flex items-center justify-between bg-destructive/10">
-                    <div>
-                      <p className="font-semibold text-foreground text-sm">{p.name}</p>
-                      <div className="flex gap-2 mt-1 text-xs">
-                        <span className="bg-destructive/20 text-destructive px-2 py-0.5 rounded">{p.category}</span>
-                        <span className="bg-orange-500/20 text-orange-500 px-2 py-0.5 rounded">{p.reason}</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
-                      <button className="p-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors"><Ban className="w-4 h-4" /></button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="p-4 border-t bg-muted/30 flex justify-end">
-              <Button variant="outline" onClick={() => { setShowProductManager(false); setSelectedMerchantId(null); }}>Close</Button>
-            </div>
-          </Card>
-        </div>
+        <ProductManagerModal
+          merchantId={selectedMerchantId}
+          merchantName={merchants.find(m => m.id === selectedMerchantId)?.storeName || ''}
+          onClose={() => { setShowProductManager(false); setSelectedMerchantId(null); }}
+        />
       )}
+      </> )}
     </div>
   );
 }

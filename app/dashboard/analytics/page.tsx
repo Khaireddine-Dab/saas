@@ -20,11 +20,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { mockTopSearchTerms, mockCategoryDemand } from '@/lib/mock-moderation-data';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { TopSearchTerm, CategoryDemand } from '@/types/analytics';
 
 export default function AnalyticsPage() {
   const [timePeriod, setTimePeriod] = useState('30d');
+  const { topSearchTerms, categoryDemand } = useAnalytics();
 
   const searchPerformanceData = [
     { week: 'Week 1', searches: 12400, conversions: 2400, revenue: 24000 },
@@ -126,7 +127,7 @@ export default function AnalyticsPage() {
         <ChartCard title="Category Demand" description="Search volume by category">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={mockCategoryDemand}
+              data={categoryDemand}
               layout="vertical"
               margin={{ top: 5, right: 30, left: 200, bottom: 5 }}
             >
@@ -224,7 +225,7 @@ export default function AnalyticsPage() {
               render: (value) => `${value.toFixed(1)}%`,
             },
           ]}
-          data={mockTopSearchTerms}
+          data={topSearchTerms}
         />
       </div>
 
@@ -277,7 +278,7 @@ export default function AnalyticsPage() {
               ),
             },
           ]}
-          data={mockCategoryDemand}
+          data={categoryDemand}
         />
       </div>
     </div>

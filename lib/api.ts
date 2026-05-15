@@ -6,6 +6,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:800
 
 interface RequestOptions extends RequestInit {
     useAuth?: boolean;
+    params?: Record<string, any>;
 }
 
 /**
@@ -28,7 +29,21 @@ async function apiRequest<T>(endpoint: string, options: RequestOptions = {}, isR
         }
     }
 
-    const url = endpoint.startsWith('http') ? endpoint : `${BACKEND_URL}${endpoint}`;
+    let url = endpoint.startsWith('http') ? endpoint : `${BACKEND_URL}${endpoint}`;
+
+    // Append query parameters if present
+    if (options.params) {
+        const query = new URLSearchParams();
+        Object.entries(options.params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+                query.append(key, String(value));
+            }
+        });
+        const queryString = query.toString();
+        if (queryString) {
+            url += (url.includes('?') ? '&' : '?') + queryString;
+        }
+    }
 
     const response = await fetch(url, {
         ...fetchOptions,
@@ -103,7 +118,7 @@ async function tryRefreshToken(): Promise<boolean> {
 /**
  * Nettoie les données d'authentification et redirige vers la page de connexion.
  */
-function clearAuthAndRedirect() {
+export function logout() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
@@ -113,25 +128,32 @@ function clearAuthAndRedirect() {
     }
 }
 
+function clearAuthAndRedirect() {
+    logout();
+}
+
 
 /**
- * Auth API
+ * Auth & Users API
+ * API endpoints for user management, authentication, and user operations
  */
 export const authApi = {
-    signup: (userData: any) =>
+    // Authentication endpoints
+    signup: (userData: { email: string; password: string; full_name?: string; phone?: string }) =>
         apiRequest<any>('/api/users/signup/', {
             method: 'POST',
             body: JSON.stringify(userData),
             useAuth: false
         }),
 
-    login: (credentials: any) =>
+    login: (credentials: { email: string; password: string }) =>
         apiRequest<any>('/api/users/login/', {
             method: 'POST',
             body: JSON.stringify(credentials),
             useAuth: false
         }),
 
+    // Current user endpoints
     getMe: () =>
         apiRequest<any>('/api/users/me/', {
             method: 'GET'
@@ -143,8 +165,14 @@ export const authApi = {
             body: JSON.stringify(userData)
         }),
 
+    // User management endpoints (admin only)
     getUsers: () =>
         apiRequest<any[]>('/api/users/list/', {
+            method: 'GET'
+        }),
+
+    getUser: (userId: string) =>
+        apiRequest<any>(`/api/users/${userId}/`, {
             method: 'GET'
         }),
 
@@ -220,31 +248,345 @@ export const productsApi = {
 };
 
 /**
+ * Items API (Products and Services)
+ */
+export const itemsApi = {
+    getAll: () =>
+        apiRequest<any[]>('/api/items/', {
+            method: 'GET'
+        }),
+
+    getByStore: (storeId: number) =>
+        apiRequest<any[]>(`/api/items/store/${storeId}/`, {
+            method: 'GET'
+        }),
+};
+
+/**
  * Orders API
+ * API endpoints for order management and operations
  */
 export const ordersApi = {
+    // Get all orders (admin only)
     getAll: () =>
         apiRequest<any[]>('/api/orders/', {
             method: 'GET'
         }),
 
-    getByStore: (storeId: number) =>
+    // Get orders by store
+    getByStore: (storeId: number | string) =>
         apiRequest<any[]>(`/api/orders/store/${storeId}/`, {
             method: 'GET'
         }),
 
-    getById: (orderId: number) =>
+    // Get single order by ID
+    getById: (orderId: number | string) =>
         apiRequest<any>(`/api/orders/${orderId}/`, {
             method: 'GET'
         }),
 
-    updateStatus: (orderId: number, status: string) =>
+    // Update order status
+    updateStatus: (orderId: number | string, status: string) =>
         apiRequest<any>(`/api/orders/${orderId}/`, {
             method: 'PATCH',
             body: JSON.stringify({ status })
         }),
+
+    // Update full order
+    update: (orderId: number | string, data: any) =>
+        apiRequest<any>(`/api/orders/${orderId}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    // Create order
+    create: (data: any) =>
+        apiRequest<any>('/api/orders/', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+
+    // Delete order
+    delete: (orderId: number | string) =>
+        apiRequest<any>(`/api/orders/${orderId}/`, {
+            method: 'DELETE'
+        }),
 };
 
 /**
- * Autres modules API peuvent être ajoutés ici (ex: subscriptionsApi, storesApi, etc.)
+ * Drivers API
+ * API endpoints for driver management and operations
  */
+export const driversApi = {
+    // Get all drivers (admin only)
+    getAll: () =>
+        apiRequest<any[]>('/api/drivers/list/', {
+            method: 'GET'
+        }),
+
+    // Get single driver by ID
+    getById: (driverId: string) =>
+        apiRequest<any>(`/api/drivers/${driverId}/`, {
+            method: 'GET'
+        }),
+
+    // Update driver status
+    updateStatus: (driverId: string, status: string) =>
+        apiRequest<any>(`/api/drivers/${driverId}/status/`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status })
+        }),
+
+    // Update full driver
+    update: (driverId: string, data: any) =>
+        apiRequest<any>(`/api/drivers/${driverId}/update/`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    // Create driver
+    create: (data: any) =>
+        apiRequest<any>('/api/drivers/add/', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+
+    // Delete driver
+    delete: (driverId: string) =>
+        apiRequest<any>(`/api/drivers/${driverId}/delete/`, {
+            method: 'DELETE'
+        }),
+
+    // Search drivers
+    search: (query: string) =>
+        apiRequest<any[]>(`/api/drivers/search/?q=${encodeURIComponent(query)}`, {
+            method: 'GET'
+        }),
+
+    // Get drivers by status
+    getByStatus: (status: string) =>
+        apiRequest<any[]>(`/api/drivers/by-status/${status}/`, {
+            method: 'GET'
+        }),
+
+    // Get drivers by vehicle type
+    getByVehicleType: (vehicleType: string) =>
+        apiRequest<any[]>(`/api/drivers/by-vehicle/${vehicleType}/`, {
+            method: 'GET'
+        }),
+};
+
+/**
+ * Reviews API
+ * API endpoints for review management, moderation, and operations
+ */
+export const reviewsApi = {
+    // Get all reviews (admin only)
+    getAll: () =>
+        apiRequest<any[]>('/api/reviews/list/', {
+            method: 'GET'
+        }),
+
+    // Get single review by ID
+    getById: (reviewId: string) =>
+        apiRequest<any>(`/api/reviews/${reviewId}/`, {
+            method: 'GET'
+        }),
+
+    // Update review (content changes)
+    update: (reviewId: string, data: any) =>
+        apiRequest<any>(`/api/reviews/${reviewId}/update/`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    // Create review
+    create: (data: any) =>
+        apiRequest<any>('/api/reviews/add/', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+
+    // Delete review
+    delete: (reviewId: string) =>
+        apiRequest<any>(`/api/reviews/${reviewId}/delete/`, {
+            method: 'DELETE'
+        }),
+
+    // Moderate review (change status)
+    moderate: (reviewId: string, data: any) =>
+        apiRequest<any>(`/api/reviews/${reviewId}/moderate/`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    // Flag review as spam/inappropriate
+    flag: (reviewId: string, data: any) =>
+        apiRequest<any>(`/api/reviews/${reviewId}/flag/`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+
+    // Mark review as helpful/unhelpful
+    markHelpful: (reviewId: string, action: 'helpful' | 'unhelpful') =>
+        apiRequest<any>(`/api/reviews/${reviewId}/helpful/`, {
+            method: 'PATCH',
+            body: JSON.stringify({ action })
+        }),
+
+    // Search reviews
+    search: (query: string) =>
+        apiRequest<any[]>(`/api/reviews/search/?q=${encodeURIComponent(query)}`, {
+            method: 'GET'
+        }),
+
+    // Get reviews by status
+    getByStatus: (status: string) =>
+        apiRequest<any[]>(`/api/reviews/by-status/${status}/`, {
+            method: 'GET'
+        }),
+
+    // Get reviews by product
+    getByProduct: (productId: string) =>
+        apiRequest<any[]>(`/api/reviews/by-product/${productId}/`, {
+            method: 'GET'
+        }),
+
+    // Get reviews by store/business
+    getByStore: (storeId: string) =>
+        apiRequest<any[]>(`/api/reviews/by-store/${storeId}/`, {
+            method: 'GET'
+        }),
+
+    // Get reviews by user
+    getByUser: (userId: string) =>
+        apiRequest<any[]>(`/api/reviews/by-user/${userId}/`, {
+            method: 'GET'
+        }),
+};
+
+/**
+ * Fraud API
+ */
+export const fraudApi = {
+    // Get all fraud alerts (combined bookings and orders)
+    getAll: () =>
+        apiRequest<any[]>('/api/fraud/alerts/', {
+            method: 'GET'
+        }),
+
+    // Get fraud metrics
+    getMetrics: () =>
+        apiRequest<any>('/api/fraud/alerts/metrics/', {
+            method: 'GET'
+        }),
+};
+
+/**
+ * Bookings API
+ */
+export const bookingsApi = {
+    // Get all bookings (admin only)
+    getAll: () =>
+        apiRequest<any[]>('/api/bookings/', {
+            method: 'GET'
+        }),
+
+    // Get single booking by ID
+    getById: (id: number | string) =>
+        apiRequest<any>(`/api/bookings/${id}/`, {
+            method: 'GET'
+        }),
+
+    // Create a new booking
+    create: (data: any) =>
+        apiRequest<any>('/api/bookings/', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+
+    // Update booking status
+    updateStatus: (id: number | string, status: string) =>
+        apiRequest<any>(`/api/bookings/${id}/`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status })
+        }),
+
+    // Delete booking
+    delete: (id: number | string) =>
+        apiRequest<any>(`/api/bookings/${id}/`, {
+            method: 'DELETE'
+        }),
+};
+
+/**
+ * Support API
+ */
+export const supportApi = {
+    // Tickets
+    getTickets: (filters: any = {}) =>
+        apiRequest<any[]>('/api/support/tickets/', {
+            method: 'GET',
+            params: filters
+        }),
+
+    getTicket: (id: string) =>
+        apiRequest<any>(`/api/support/tickets/${id}/`, {
+            method: 'GET'
+        }),
+
+    createTicket: (data: any) =>
+        apiRequest<any>('/api/support/tickets/', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+
+    updateTicket: (id: string, data: any) =>
+        apiRequest<any>(`/api/support/tickets/${id}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    // Messages (Chat)
+    getMessages: (ticketId: string) =>
+        apiRequest<any[]>(`/api/support/messages/?ticket_id=${ticketId}`, {
+            method: 'GET'
+        }),
+
+    sendMessage: (data: { ticket: string; content: string; sender_type?: string }) =>
+        apiRequest<any>('/api/support/messages/', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+};
+
+export const transactionsApi = {
+    getTransactions: (params?: { 
+        status?: string; 
+        type?: string; 
+        merchant_id?: string | number;
+        customer_id?: string;
+        search?: string;
+    }) =>
+        apiRequest<{ count: number; results: any[] }>('/api/transactions/', {
+            params
+        }),
+
+    getTransactionStats: (params?: { merchant_id?: string | number }) =>
+        apiRequest<any>('/api/transactions/stats/', {
+            params
+        }),
+
+    updateTransactionStatus: (id: string, status: string) =>
+        apiRequest<any>(`/api/transactions/${id}/`, {
+            method: 'PUT',
+            body: JSON.stringify({ status })
+        }),
+};
+
+// Aliases for backward compatibility or semantic clarity
+export const payoutsApi = {
+    getPayouts: (params?: any) => transactionsApi.getTransactions({ ...params, type: 'payout' }),
+    getPayoutStats: () => transactionsApi.getTransactionStats({ type: 'payout' } as any),
+    updatePayoutStatus: transactionsApi.updateTransactionStatus,
+};

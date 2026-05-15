@@ -1,31 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { Download, Send, Plus, Search, Filter } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Download, Send, Plus, Search, Filter, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-
-const mockPayouts = Array.from({ length: 25 }, (_, i) => ({
-  id: `payout-${i + 1}`,
-  merchantId: `merchant-${Math.floor(i / 3) + 1}`,
-  merchantName: `Store ${Math.floor(i / 3) + 1}`,
-  period: {
-    from: new Date(Date.now() - (7 - (i % 7)) * 24 * 60 * 60 * 1000),
-    to: new Date(Date.now() - (6 - (i % 7)) * 24 * 60 * 60 * 1000),
-  },
-  grossSales: Math.floor(Math.random() * 50000) + 5000,
-  refunds: Math.floor(Math.random() * 5000),
-  commissions: Math.floor(Math.random() * 10000),
-  adjustments: Math.floor(Math.random() * 1000),
-  netAmount: Math.floor(Math.random() * 30000) + 1000,
-  status: ['pending', 'processing', 'completed', 'failed'][i % 4] as any,
-  paymentMethod: 'bank_transfer',
-  transactionId: i % 4 === 3 ? null : `TXN-${String(i + 1).padStart(8, '0')}`,
-  processedAt: i % 4 === 3 ? null : new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-  nextPayoutDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-}));
+import { payoutsApi } from '@/lib/api';
 
 const statusColors = {
   pending: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/40',
@@ -35,26 +16,54 @@ const statusColors = {
 };
 
 export default function PayoutsPage() {
+  const [payouts, setPayouts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
   const [selectedPayouts, setSelectedPayouts] = useState<string[]>([]);
 
-  const filteredPayouts = mockPayouts.filter(payout => {
-    const matchesSearch = payout.merchantName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = !statusFilter || payout.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  useEffect(() => {
+    loadData();
+  }, [statusFilter]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [payoutsData, statsData] = await Promise.all([
+        payoutsApi.getPayouts({ status: statusFilter }),
+        payoutsApi.getPayoutStats()
+      ]);
+      setPayouts(payoutsData.results || []);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Failed to load payouts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredPayouts = payouts.filter(payout => {
+    const matchesSearch = payout.merchant_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
   });
 
-  const totalPending = filteredPayouts
-    .filter(p => p.status === 'pending')
-    .reduce((sum, p) => sum + p.netAmount, 0);
+  const totalPendingAmount = stats?.status?.pending_amount || 
+    payouts.filter(p => p.status === 'pending').reduce((sum, p) => sum + (p.net_amount || 0), 0);
 
-  const handleBulkPayout = () => {
-    alert(`Processing ${selectedPayouts.length} payouts totaling $${mockPayouts
-      .filter(p => selectedPayouts.includes(p.id))
-      .reduce((sum, p) => sum + p.netAmount, 0)
-      }`);
-    setSelectedPayouts([]);
+  const handleBulkPayout = async () => {
+    const confirmed = confirm(`Process ${selectedPayouts.length} payouts?`);
+    if (!confirmed) return;
+
+    try {
+      await Promise.all(selectedPayouts.map(id => 
+        payoutsApi.updatePayoutStatus(id, 'processing')
+      ));
+      setSelectedPayouts([]);
+      loadData();
+    } catch (error) {
+      console.error('Failed to process payouts:', error);
+    }
   };
 
   return (
@@ -84,28 +93,28 @@ export default function PayoutsPage() {
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Pending Payouts</div>
           <div className="text-2xl font-bold text-yellow-500">
-            {mockPayouts.filter(p => p.status === 'pending').length}
+            {stats?.status?.pending || payouts.filter(p => p.status === 'pending').length}
           </div>
-          <div className="text-xs text-yellow-500 mt-1">${totalPending.toLocaleString()}</div>
+          <div className="text-xs text-yellow-500 mt-1">${totalPendingAmount.toLocaleString()}</div>
         </Card>
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Processing</div>
           <div className="text-2xl font-bold text-primary">
-            {mockPayouts.filter(p => p.status === 'processing').length}
+            {stats?.status?.processing || payouts.filter(p => p.status === 'processing').length}
           </div>
           <div className="text-xs text-muted-foreground mt-1">In transit</div>
         </Card>
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Completed</div>
           <div className="text-2xl font-bold text-green-500">
-            {mockPayouts.filter(p => p.status === 'completed').length}
+            {stats?.status?.completed || payouts.filter(p => p.status === 'completed').length}
           </div>
           <div className="text-xs text-muted-foreground mt-1">This month</div>
         </Card>
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Failed</div>
           <div className="text-2xl font-bold text-destructive">
-            {mockPayouts.filter(p => p.status === 'failed').length}
+            {stats?.status?.failed || payouts.filter(p => p.status === 'failed').length}
           </div>
           <div className="text-xs text-destructive mt-1">Needs action</div>
         </Card>
@@ -134,6 +143,7 @@ export default function PayoutsPage() {
             <option value="completed">Completed</option>
             <option value="failed">Failed</option>
           </select>
+          {loading && <Loader2 className="w-5 h-5 animate-spin text-primary" />}
         </div>
       </Card>
 
@@ -157,10 +167,10 @@ export default function PayoutsPage() {
                   />
                 </th>
                 <th className="px-6 py-3 text-left font-semibold">Merchant</th>
-                <th className="px-6 py-3 text-left font-semibold">Period</th>
-                <th className="px-6 py-3 text-right font-semibold">Gross Sales</th>
-                <th className="px-6 py-3 text-right font-semibold">Commission</th>
-                <th className="px-6 py-3 text-right font-semibold">Net Amount</th>
+                <th className="px-6 py-3 text-left font-semibold">Date</th>
+                <th className="px-6 py-3 text-right font-semibold">Amount</th>
+                <th className="px-6 py-3 text-right font-semibold">Fee</th>
+                <th className="px-6 py-3 text-right font-semibold">Net</th>
                 <th className="px-6 py-3 text-left font-semibold">Status</th>
                 <th className="px-6 py-3 text-left font-semibold">Action</th>
               </tr>
@@ -183,20 +193,20 @@ export default function PayoutsPage() {
                     />
                   </td>
                   <td className="px-6 py-4">
-                    <p className="font-semibold">{payout.merchantName}</p>
-                    <p className="text-xs text-muted-foreground">{payout.merchantId}</p>
+                    <p className="font-semibold">{payout.merchant_name || 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground">{payout.transaction_code}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm">{payout.period.from.toLocaleDateString()} - {payout.period.to.toLocaleDateString()}</p>
+                    <p className="text-sm">{new Date(payout.time_created).toLocaleDateString()}</p>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <p className="font-semibold">${payout.grossSales.toLocaleString()}</p>
+                    <p className="font-semibold">${Number(payout.amount).toLocaleString()}</p>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <p className="font-semibold">${payout.commissions.toLocaleString()}</p>
+                    <p className="font-semibold">${Number(payout.fee).toLocaleString()}</p>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <p className="font-bold text-foreground">${payout.netAmount.toLocaleString()}</p>
+                    <p className="font-bold text-foreground">${(payout.net_amount || (payout.amount - payout.fee)).toLocaleString()}</p>
                   </td>
                   <td className="px-6 py-4">
                     <Badge className={statusColors[payout.status as keyof typeof statusColors]}>
@@ -205,10 +215,10 @@ export default function PayoutsPage() {
                   </td>
                   <td className="px-6 py-4">
                     {payout.status === 'failed' && (
-                      <Button size="sm" variant="outline">Retry</Button>
+                      <Button size="sm" variant="outline" onClick={() => payoutsApi.updatePayoutStatus(payout.id, 'pending').then(loadData)}>Retry</Button>
                     )}
                     {payout.status === 'pending' && (
-                      <Button size="sm">Send</Button>
+                      <Button size="sm" onClick={() => payoutsApi.updatePayoutStatus(payout.id, 'processing').then(loadData)}>Send</Button>
                     )}
                   </td>
                 </tr>

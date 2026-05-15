@@ -1,65 +1,93 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Banner, BannerFilter, BannerStatistics } from '@/types/banner';
-
-const generateMockBanners = (count: number): Banner[] => {
-  const placements = ['homepage', 'category', 'checkout', 'popup'] as const;
-  const statuses = ['draft', 'scheduled', 'active', 'inactive', 'expired'] as const;
-
-  return Array.from({ length: count }, (_, i) => ({
-    id: `banner-${i + 1}`,
-    title: `Promotional Banner ${i + 1}`,
-    description: `Get amazing discounts on ${['electronics', 'clothing', 'home'][i % 3]}`,
-    imageUrl: `https://via.placeholder.com/1200x400?text=Banner+${i + 1}`,
-    placement: placements[i % placements.length],
-    targetUrl: `/promotions/${i + 1}`,
-    status: statuses[i % statuses.length],
-    priority: Math.floor(Math.random() * 10) + 1,
-    startDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-    endDate: new Date(Date.now() + 50 * 24 * 60 * 60 * 1000),
-    impressions: Math.floor(Math.random() * 50000) + 1000,
-    clicks: Math.floor(Math.random() * 5000) + 100,
-    conversionRate: Math.random() * 0.1 + 0.01,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: 'admin',
-  }));
-};
+import { mapBannersFromAPI } from '@/lib/banner-mapper';
 
 export function useBanners(filters?: BannerFilter) {
-  const [banners] = useState<Banner[]>(() => generateMockBanners(12));
-  const [isLoading] = useState(false);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Build query parameters
+        const params = new URLSearchParams();
+        if (filters?.status) {
+          params.append('status', filters.status);
+        }
+        if (filters?.placement) {
+          params.append('placement', filters.placement);
+        }
+
+        // Fetch banners from backend API
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/banners/?${params.toString()}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch banners: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const bannersAPI = Array.isArray(data) ? data : data.results || [];
+
+        // Map banners from API format to frontend format
+        const mappedBanners = mapBannersFromAPI(bannersAPI);
+        setBanners(mappedBanners);
+      } catch (err) {
+        console.error('[useBanners] Error fetching banners:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch banners');
+        setBanners([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBanners();
+  }, [filters?.status, filters?.placement]);
 
   const filteredBanners = useMemo(() => {
     let result = banners;
 
-    if (filters?.status) {
-      result = result.filter(b => b.status === filters.status);
-    }
-    if (filters?.placement) {
-      result = result.filter(b => b.placement === filters.placement);
-    }
     if (filters?.search) {
       const query = filters.search.toLowerCase();
       result = result.filter(b => b.title.toLowerCase().includes(query));
     }
 
     return result;
-  }, [banners, filters]);
+  }, [banners, filters?.search]);
 
-  const statistics: BannerStatistics = useMemo(() => ({
-    totalBanners: banners.length,
-    activeBanners: banners.filter(b => b.status === 'active').length,
-    totalImpressions: banners.reduce((sum, b) => sum + b.impressions, 0),
-    totalClicks: banners.reduce((sum, b) => sum + b.clicks, 0),
-    avgClickRate: banners.reduce((sum, b) => sum + (b.clicks / b.impressions), 0) / banners.length,
-  }), [banners]);
+  const statistics: BannerStatistics = useMemo(() => {
+    const totalImpressions = banners.reduce((sum, b) => sum + b.impressions, 0);
+    const totalClicks = banners.reduce((sum, b) => sum + b.clicks, 0);
+    const avgClickRate = totalImpressions > 0 ? totalClicks / totalImpressions : 0;
+
+    return {
+      totalBanners: banners.length,
+      activeBanners: banners.filter(b => b.status === 'active').length,
+      totalImpressions,
+      totalClicks,
+      avgClickRate,
+    };
+  }, [banners]);
 
   return {
     banners: filteredBanners,
     allBanners: banners,
     statistics,
     isLoading,
+    error,
   };
 }

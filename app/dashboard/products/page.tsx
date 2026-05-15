@@ -1,17 +1,17 @@
 'use client';
 
 // ⚠️ IMPORTANT: Do NOT import anything from moderation files here.
-// This page uses Product / mockProducts only.
+// This page uses Product types and real data from backend.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Search, Plus, ArrowUpDown, ArrowUp, ArrowDown,
-  Eye, Star, Shield,
+  Eye, Star, Shield, Loader2,
 } from 'lucide-react';
 import { formatCurrency, formatNumber, formatDate } from '@/lib/helpers';
-import { mockProducts } from '@/lib/mock-data';
+import { useProducts } from '@/hooks/useProducts';
 import { Product } from '@/types/product';
 // NO imports from '@/types/moderation' or '@/lib/mock-moderation-data'
 
@@ -51,20 +51,51 @@ function SortIcon({ col, sortKey, dir }: { col: string; sortKey: string; dir: 'a
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ProductsPage() {
   const router = useRouter();
+  const { products, isLoading, error, fetchProducts } = useProducts();
+  
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+  
   const [sortKey,       setSortKey]       = useState<keyof Product>('createdAt');
   const [sortDir,       setSortDir]       = useState<'asc' | 'desc'>('desc');
   const [searchTerm,    setSearchTerm]    = useState('');
   const [statusFilter,  setStatusFilter]  = useState<string | null>(null);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+          <p className="text-muted-foreground">Chargement des produits...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Produits</h1>
+          <p className="text-muted-foreground text-sm mt-1">Surveiller et modérer tous les produits de la marketplace</p>
+        </div>
+        <div className="bg-card border border-red-500/30 rounded-xl p-8 text-center">
+          <p className="text-red-400">Erreur: {error}</p>
+        </div>
+      </div>
+    );
+  }products.length > 0 ? (products.reduce((s, p) => s + p.averageRating, 0) / products.length).toFixed(1) : '0'
+
   const statusOptions = ['visible', 'hidden', 'flagged', 'banned'];
   const statusCounts = {
-    visible: mockProducts.filter(p => p.status === 'visible').length,
-    hidden:  mockProducts.filter(p => p.status === 'hidden').length,
-    flagged: mockProducts.filter(p => p.status === 'flagged').length,
-    banned:  mockProducts.filter(p => p.status === 'banned').length,
+    visible: products.filter(p => p.status === 'visible').length,
+    hidden:  products.filter(p => p.status === 'hidden').length,
+    flagged: products.filter(p => p.status === 'flagged').length,
+    banned:  products.filter(p => p.status === 'banned').length,
   };
 
-  const filtered = mockProducts.filter(p => {
+  const filtered = products.filter(p => {
     const q = searchTerm.toLowerCase();
     return (
       (!q || p.name.toLowerCase().includes(q) || p.businessName.toLowerCase().includes(q)) &&
@@ -85,7 +116,7 @@ export default function ProductsPage() {
     else { setSortKey(key); setSortDir('asc'); }
   };
 
-  const avgRating = (mockProducts.reduce((s, p) => s + p.averageRating, 0) / mockProducts.length).toFixed(1);
+  const avgRating = products.length > 0 ? (products.reduce((s, p) => s + p.averageRating, 0) / products.length).toFixed(1) : '0';
 
   const cols: { key: keyof Product; label: string }[] = [
     { key: 'name',          label: 'Product' },
@@ -103,8 +134,8 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Products</h1>
-          <p className="text-muted-foreground text-sm mt-1">Monitor and moderate all marketplace products</p>
+          <h1 className="text-2xl font-bold text-foreground">Produits</h1>
+          <p className="text-muted-foreground text-sm mt-1">Surveiller et modérer tous les produits de la marketplace</p>
         </div>
         {/* ── Action buttons ── */}
         <div className="flex items-center gap-2">
@@ -115,11 +146,11 @@ export default function ProductsPage() {
             onClick={() => router.push('/dashboard/products/moderation')}
           >
             <Shield className="w-4 h-4" />
-            Moderation
+            Modération
           </Button>
           <Button size="sm" className="gap-2">
             <Plus className="w-4 h-4" />
-            Add Product
+            Ajouter Produit
           </Button>
         </div>
       </div>
@@ -130,7 +161,7 @@ export default function ProductsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search products or merchants…"
+            placeholder="Cherchez des produits ou des marchands..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="w-full bg-card border border-border rounded-lg pl-10 pr-4 py-2 text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30 transition"
@@ -143,17 +174,17 @@ export default function ProductsPage() {
               !statusFilter ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border hover:text-foreground hover:border-primary/40'
             }`}
           >
-            All ({mockProducts.length})
+            Tous ({products.length})
           </button>
           {statusOptions.map(s => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all capitalize ${
+              className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all ${
                 statusFilter === s ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground border-border hover:text-foreground hover:border-primary/40'
               }`}
             >
-              {s} ({statusCounts[s as keyof typeof statusCounts]})
+              {s === 'visible' ? 'Visible' : s === 'hidden' ? 'Masqué' : s === 'flagged' ? 'Signalé' : 'Banni'} ({statusCounts[s as keyof typeof statusCounts]})
             </button>
           ))}
         </div>
@@ -162,10 +193,10 @@ export default function ProductsPage() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Total Products', value: formatNumber(mockProducts.length), color: 'text-foreground' },
-          { label: 'Visible',        value: statusCounts.visible,              color: 'text-green-400' },
-          { label: 'Flagged',        value: statusCounts.flagged,              color: 'text-red-400' },
-          { label: 'Avg Rating',     value: `${avgRating} ★`,                  color: 'text-amber-400' },
+          { label: 'Total Produits', value: formatNumber(products.length), color: 'text-foreground' },
+          { label: 'Visibles',        value: statusCounts.visible,              color: 'text-green-400' },
+          { label: 'Signalés',        value: statusCounts.flagged,              color: 'text-red-400' },
+          { label: 'Note Moyenne',     value: `${avgRating} ★`,                  color: 'text-amber-400' },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-card border border-border rounded-xl p-4">
             <p className="text-xs text-muted-foreground">{label}</p>
@@ -184,19 +215,19 @@ export default function ProductsPage() {
           <div className="grid grid-cols-12 px-4 py-3 border-b border-border bg-muted/30">
             {/* Product */}
             <button onClick={() => handleSort('name')} className="col-span-3 flex items-center text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
-              Product <SortIcon col="name" sortKey={sortKey} dir={sortDir} />
+              Produit <SortIcon col="name" sortKey={sortKey} dir={sortDir} />
             </button>
             {/* Category */}
             <button onClick={() => handleSort('category')} className="col-span-2 hidden sm:flex items-center text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
-              Category <SortIcon col="category" sortKey={sortKey} dir={sortDir} />
+              Catégorie <SortIcon col="category" sortKey={sortKey} dir={sortDir} />
             </button>
             {/* Price */}
             <button onClick={() => handleSort('price')} className="col-span-1 flex items-center text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
-              Price <SortIcon col="price" sortKey={sortKey} dir={sortDir} />
+              Prix <SortIcon col="price" sortKey={sortKey} dir={sortDir} />
             </button>
             {/* Status */}
             <button onClick={() => handleSort('status')} className="col-span-2 flex items-center text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
-              Status <SortIcon col="status" sortKey={sortKey} dir={sortDir} />
+              Statut <SortIcon col="status" sortKey={sortKey} dir={sortDir} />
             </button>
             {/* Reports */}
             <button onClick={() => handleSort('totalReports')} className="col-span-1 hidden md:flex items-center text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
@@ -295,7 +326,7 @@ export default function ProductsPage() {
           <div className="px-4 py-3 border-t border-border bg-muted/20 flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
               Showing <span className="font-semibold text-foreground">{sorted.length}</span> of{' '}
-              <span className="font-semibold text-foreground">{mockProducts.length}</span> products
+              <span className="font-semibold text-foreground">{products.length}</span> products
             </span>
           </div>
         </div>

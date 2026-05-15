@@ -10,6 +10,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
+import { logout } from '@/lib/api';
+import { toast } from 'sonner';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Notification {
@@ -397,7 +399,13 @@ export function DashboardHeader({
                 <React.Fragment key={label}>
                   {divider && <div className="my-1 border-t border-border" />}
                   <button
-                    onClick={() => setProfileOpen(false)}
+                    onClick={() => {
+                      if (danger && label === 'Logout') {
+                        logout();
+                        toast.success('Déconnexion réussie');
+                      }
+                      setProfileOpen(false);
+                    }}
                     className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors text-left mx-0 ${
                       danger
                         ? 'text-destructive hover:bg-destructive/10'

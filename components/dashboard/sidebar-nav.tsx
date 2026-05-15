@@ -9,9 +9,11 @@ import {
   Package, Star, Tag, Image as ImageIcon, Shield, Map,
   BarChart3, Settings, MessageCircle, AlertCircle,
   Car, DollarSign, ReceiptText, RefreshCcw, CreditCard,
-  Bell, FileText, Layers,
+  Bell, FileText, Layers, LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logout } from '@/lib/api';
+import { toast } from 'sonner';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface NavItem {
@@ -28,11 +30,10 @@ const navItems: NavItem[] = [
   { title: 'Platform Management', section: true },
   { title: 'Users',               href: '/dashboard/users',                  icon: <Users className="w-4 h-4 text-current" /> },
   { title: 'Merchants',           href: '/dashboard/merchants',              icon: <Briefcase className="w-4 h-4 text-current" /> },
-  { title: 'Drivers',             href: '/dashboard/drivers',                icon: <Truck className="w-4 h-4 text-current" /> },
 
   { title: 'Commerce', section: true },
   { title: 'Orders',              href: '/dashboard/orders',                 icon: <ShoppingCart className="w-4 h-4 text-current" /> },
-  { title: 'Products',            href: '/dashboard/products',               icon: <Package className="w-4 h-4 text-current" /> },
+  { title: 'Items',               href: '/dashboard/items',                  icon: <Package className="w-4 h-4 text-current" /> },
   { title: 'Reviews',             href: '/dashboard/reviews',                icon: <Star className="w-4 h-4 text-current" /> },
 
   { title: 'Marketing', section: true },
@@ -50,9 +51,6 @@ const navItems: NavItem[] = [
   { title: 'Brands',              href: '/dashboard/admin/brands',           icon: <Briefcase className="w-4 h-4 text-current" /> },
   { title: 'Tax & Discount',      href: '/dashboard/admin/tax-reports',      icon: <ReceiptText className="w-4 h-4 text-current" /> },
 
-  { title: 'Dispatcher', section: true },
-  { title: 'Vehicles',            href: '/dashboard/dispatcher/vehicles',    icon: <Car className="w-4 h-4 text-current" /> },
-  { title: 'Pricing',             href: '/dashboard/dispatcher/pricing',     icon: <DollarSign className="w-4 h-4 text-current" /> },
 
   { title: 'Support', section: true },
   { title: 'Support Tickets',     href: '/dashboard/support/tickets',        icon: <AlertCircle className="w-4 h-4 text-current" /> },
@@ -195,6 +193,24 @@ export function SidebarNav() {
           })}
         </ul>
       </nav>
+      
+      {/* ── Logout Section ── */}
+      <div className={cn('px-3 pb-2', collapsed && 'px-2')}>
+        <button
+          onClick={() => {
+            logout();
+            toast.success('Déconnexion réussie');
+          }}
+          className={cn(
+            'flex items-center gap-3 w-full rounded-lg text-sm font-medium transition-all duration-150 group',
+            'text-destructive hover:bg-destructive/10 px-3 py-2.5',
+            collapsed && 'justify-center px-0 h-10'
+          )}
+        >
+          <LogOut className="w-4 h-4 shrink-0 transition-transform duration-150 group-hover:scale-110" />
+          {!collapsed && <span>Logout</span>}
+        </button>
+      </div>
 
       {/* ── Footer ── */}
       <div className="flex-shrink-0 border-t border-border px-3 py-3">

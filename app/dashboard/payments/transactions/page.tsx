@@ -1,37 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, Download, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-
-const mockTransactions = Array.from({ length: 30 }, (_, i) => ({
-  id: `txn-${String(i + 1).padStart(8, '0')}`,
-  orderNumber: `ORD-${String(i + 1).padStart(6, '0')}`,
-  customerId: `cust-${Math.floor(i / 3) + 1}`,
-  customerName: `Customer ${Math.floor(i / 3) + 1}`,
-  merchantId: `merchant-${(i % 5) + 1}`,
-  merchantNumber: `MERCH-${String((i % 5) + 1).padStart(4, '0')}`,
-  merchantName: `Store ${(i % 5) + 1}`,
-  driverName: `Driver ${Math.floor(i / 4) + 1}`,
-  dropLocation: ['Downtown', 'Suburbs', 'Mall', 'Port'][i % 4],
-  amount: Math.floor(Math.random() * 5000) + 100,
-  gateway: ['stripe', 'paypal', 'razorpay', 'cod', 'wallet'][i % 5] as any,
-  status: ['completed', 'pending', 'failed', 'completed'][i % 4] as any,
-  type: ['payment', 'refund', 'wallet_topup'][i % 3] as any,
-  date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-  timeCreated: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-  timeAccepted: new Date(Date.now() - Math.random() * 29 * 24 * 60 * 60 * 1000),
-  collectionTime: new Date(Date.now() - Math.random() * 28 * 24 * 60 * 60 * 1000),
-  waitDuration: Math.floor(Math.random() * 60) + 5,
-  pickupTime: new Date(Date.now() - Math.random() * 27 * 24 * 60 * 60 * 1000),
-  deliveryDuration: Math.floor(Math.random() * 120) + 15,
-  timeDelivered: new Date(Date.now() - Math.random() * 26 * 24 * 60 * 60 * 1000),
-  km: Math.floor(Math.random() * 50) + 5,
-  fee: Math.floor(Math.random() * 200) + 10,
-}));
+import { useTransactions } from '@/hooks/useTransactions';
+import { FrontendTransaction } from '@/lib/transaction-mapper';
 
 const statusColors: Record<string, string> = {
   completed: 'bg-green-500/20 text-green-500 border-green-500/40',
@@ -69,9 +45,22 @@ export default function TransactionsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
+  const [isClient, setIsClient] = useState(false);
+
+  // Fetch transactions from API
+  const { transactions, stats, loading, error } = useTransactions({
+    status: statusFilter || undefined,
+    type: filterType || undefined,
+    merchant_id: merchantFilter ? parseInt(merchantFilter) : undefined,
+  });
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const filteredTransactions = useMemo(() => {
-    return mockTransactions.filter(txn => {
+    // Apply client-side filtering for search and date range
+    return transactions.filter(txn => {
       const q = searchQuery.toLowerCase();
       const matchesSearch =
         !q ||
@@ -80,18 +69,15 @@ export default function TransactionsPage() {
         txn.customerName.toLowerCase().includes(q) ||
         txn.merchantName.toLowerCase().includes(q) ||
         txn.merchantNumber.toLowerCase().includes(q) ||
-        txn.driverName.toLowerCase().includes(q) ||
+        (txn.driverName?.toLowerCase().includes(q) || false) ||
         txn.dropLocation.toLowerCase().includes(q);
-      const matchesStatus = !statusFilter || txn.status === statusFilter;
       const matchesGateway = !gatewayFilter || txn.gateway === gatewayFilter;
-      const matchesMerchant = !merchantFilter || txn.merchantId === merchantFilter;
-      const matchesType = !filterType || txn.type === filterType;
       const start = startDate ? new Date(startDate) : null;
       const end = endDate ? new Date(endDate + 'T23:59:59') : null;
       const inDateRange = (!start || txn.date >= start) && (!end || txn.date <= end);
-      return matchesSearch && matchesStatus && matchesGateway && matchesMerchant && matchesType && inDateRange;
+      return matchesSearch && matchesGateway && inDateRange;
     });
-  }, [searchQuery, statusFilter, gatewayFilter, merchantFilter, filterType, startDate, endDate]);
+  }, [transactions, searchQuery, gatewayFilter, startDate, endDate]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / PAGE_SIZE));
   const paginated = filteredTransactions.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -123,10 +109,30 @@ export default function TransactionsPage() {
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Transactions', value: filteredTransactions.length, sub: 'Matching filters', color: 'text-foreground' },
-          { label: 'Completed Revenue', value: `$${(totalRevenue / 1000).toFixed(1)}K`, sub: `${filteredTransactions.filter(t => t.status === 'completed').length} orders`, color: 'text-green-500' },
-          { label: 'Failed Transactions', value: filteredTransactions.filter(t => t.status === 'failed').length, sub: 'Needs review', color: 'text-red-500' },
-          { label: 'Total Fees', value: `$${(totalFees / 1000).toFixed(1)}K`, sub: 'Gateway fees', color: 'text-foreground' },
+          {
+            label: 'Total Transactions',
+            value: loading ? '...' : filteredTransactions.length,
+            sub: 'Matching filters',
+            color: 'text-foreground',
+          },
+          {
+            label: 'Completed Revenue',
+            value: loading ? '...' : `$${(totalRevenue / 1000).toFixed(1)}K`,
+            sub: `${filteredTransactions.filter(t => t.status === 'completed').length} orders`,
+            color: 'text-green-500',
+          },
+          {
+            label: 'Failed Transactions',
+            value: loading ? '...' : filteredTransactions.filter(t => t.status === 'failed').length,
+            sub: 'Needs review',
+            color: 'text-red-500',
+          },
+          {
+            label: 'Total Fees',
+            value: loading ? '...' : `$${(totalFees / 1000).toFixed(1)}K`,
+            sub: 'Gateway fees',
+            color: 'text-foreground',
+          },
         ].map(({ label, value, sub, color }) => (
           <Card key={label} className="p-4">
             <div className="text-xs text-muted-foreground">{label}</div>
@@ -135,6 +141,15 @@ export default function TransactionsPage() {
           </Card>
         ))}
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <Card className="p-4 border-red-500/30 bg-red-500/5">
+          <div className="text-sm text-red-500">
+            <strong>Error:</strong> {error}
+          </div>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card className="p-5 space-y-4">
@@ -150,7 +165,7 @@ export default function TransactionsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           <FilterSelect label="Merchant" value={merchantFilter} onChange={e => { setMerchantFilter(e.target.value); setPage(1); }}>
             <option value="">All Merchants</option>
-            {Array.from(new Map(mockTransactions.map(t => [t.merchantId, t.merchantName]))).map(([id, name]) => (
+            {isClient && Array.from(new Map(transactions.map(t => [t.merchantId.toString(), t.merchantName]))).map(([id, name]) => (
               <option key={id} value={id}>{name}</option>
             ))}
           </FilterSelect>
@@ -221,7 +236,13 @@ export default function TransactionsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {paginated.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={17} className="px-4 py-12 text-center text-muted-foreground text-sm">
+                    Loading transactions...
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
                 <tr>
                   <td colSpan={17} className="px-4 py-12 text-center text-muted-foreground text-sm">
                     No transactions match your filters.

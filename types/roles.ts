@@ -18,8 +18,6 @@ export type Permission =
   | 'view_analytics'
   | 'view_reports'
   | 'create_reports'
-  | 'view_drivers'
-  | 'manage_drivers'
   | 'view_commissions'
   | 'edit_commissions'
   | 'view_payouts'
@@ -76,8 +74,6 @@ export const DEFAULT_PERMISSIONS: Record<RoleType, Permission[]> = {
     'view_analytics',
     'view_reports',
     'create_reports',
-    'view_drivers',
-    'manage_drivers',
     'view_commissions',
     'edit_commissions',
     'view_payouts',
@@ -105,7 +101,6 @@ export const DEFAULT_PERMISSIONS: Record<RoleType, Permission[]> = {
     'moderate_reviews',
     'view_analytics',
     'view_reports',
-    'view_drivers',
     'view_commissions',
     'view_payouts',
     'manage_coupons',
@@ -123,7 +118,6 @@ export const DEFAULT_PERMISSIONS: Record<RoleType, Permission[]> = {
     'view_reviews',
     'moderate_reviews',
     'view_reports',
-    'view_drivers',
     'view_fraud_alerts',
     'investigate_fraud',
   ],
@@ -136,7 +130,6 @@ export const DEFAULT_PERMISSIONS: Record<RoleType, Permission[]> = {
     'view_reviews',
     'view_analytics',
     'view_reports',
-    'view_drivers',
   ],
   support: [
     'view_users',

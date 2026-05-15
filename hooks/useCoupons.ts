@@ -1,37 +1,50 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Coupon, CouponFilter, CouponStatistics } from '@/types/coupon';
-
-const generateMockCoupons = (count: number): Coupon[] => {
-  const statuses = ['active', 'inactive', 'expired', 'scheduled'] as const;
-  const discountTypes = ['percentage', 'fixed', 'freeShipping'] as const;
-
-  return Array.from({ length: count }, (_, i) => ({
-    id: `coupon-${i + 1}`,
-    code: `PROMO${String(i + 1).padStart(3, '0')}`,
-    description: `Discount coupon ${i + 1}`,
-    discountType: discountTypes[Math.floor(Math.random() * discountTypes.length)],
-    discountValue: Math.floor(Math.random() * 50) + 5,
-    maxUses: Math.floor(Math.random() * 1000) + 100,
-    currentUses: Math.floor(Math.random() * 500),
-    minPurchaseAmount: Math.floor(Math.random() * 100) + 20,
-    maxDiscountAmount: Math.floor(Math.random() * 500) + 50,
-    applicableCategories: ['electronics', 'clothing', 'home'],
-    applicableBusinesses: [],
-    status: statuses[Math.floor(Math.random() * statuses.length)],
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: 'admin',
-    isActive: Math.random() > 0.3,
-  }));
-};
+import { mapPromotionsToCoupons } from '@/lib/promotion-mapper';
 
 export function useCoupons(filters?: CouponFilter) {
-  const [coupons] = useState<Coupon[]>(() => generateMockCoupons(25));
-  const [isLoading] = useState(false);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCoupons = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Fetch promotions from backend API
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/promotions/`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') || '' : ''}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch promotions: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const promotions = Array.isArray(data) ? data : data.results || [];
+        
+        // Map promotions to coupon format
+        const mappedCoupons = mapPromotionsToCoupons(promotions);
+        setCoupons(mappedCoupons);
+      } catch (err) {
+        console.error('[useCoupons] Error fetching promotions:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch coupons');
+        setCoupons([]); // Fallback to empty list on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCoupons();
+  }, []);
 
   const filteredCoupons = useMemo(() => {
     let result = coupons;
@@ -60,5 +73,6 @@ export function useCoupons(filters?: CouponFilter) {
     allCoupons: coupons,
     statistics,
     isLoading,
+    error,
   };
 }

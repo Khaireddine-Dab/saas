@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Bell, Search, Menu, LogOut, User as UserIcon, Settings as SettingsIcon } from "lucide-react"
+import { Bell, Search, Menu, LogOut, User as UserIcon, Settings as SettingsIcon, ShieldCheck, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -124,11 +124,19 @@ export function DashboardHeader() {
             <DropdownMenuSeparator />
             <DropdownMenuItem className="cursor-pointer">
               <UserIcon className="mr-2 h-4 w-4" />
-              <span>Profil</span>
+              <span>Profile</span>
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer">
               <SettingsIcon className="mr-2 h-4 w-4" />
-              <span>Paramètres</span>
+              <span>Account Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <ShieldCheck className="mr-2 h-4 w-4" />
+              <span>Security</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <Activity className="mr-2 h-4 w-4" />
+              <span>Activity Logs</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -136,7 +144,7 @@ export function DashboardHeader() {
               onClick={handleLogout}
             >
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Se déconnecter</span>
+              <span>Logout</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
