@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 
 const mockTaxData = Array.from({ length: 20 }, (_, i) => ({
   id: `tax-${String(i + 1).padStart(4, '0')}`,
-  couponCode: `SAVE${String(i + 1).padStart(3, '0')}`,
+  promotionCode: `PROMO${String(i + 1).padStart(3, '0')}`,
   type: ['flat_discount', 'percentage', 'bogo', 'volume'][i % 4],
   totalUsed: Math.floor(Math.random() * 1000) + 10,
   totalDiscounted: Math.floor(Math.random() * 50000) + 1000,
@@ -25,7 +25,7 @@ export default function TaxReportsPage() {
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
 
   const filteredData = mockTaxData.filter(item => {
-    const matchesSearch = item.couponCode.includes(searchQuery.toUpperCase());
+    const matchesSearch = item.promotionCode.includes(searchQuery.toUpperCase());
     const matchesType = !typeFilter || item.type === typeFilter;
     const matchesStatus = !statusFilter || item.status === statusFilter;
     return matchesSearch && matchesType && matchesStatus;
@@ -46,7 +46,7 @@ export default function TaxReportsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Tax & Discount Reports</h1>
-          <p className="text-muted-foreground">Manage and moderate discounts, coupons, and promotional offers</p>
+          <p className="text-muted-foreground">Manage and moderate discounts, promotions, and promotional offers</p>
         </div>
         <Button>
           <Download className="w-4 h-4 mr-2" />
@@ -57,7 +57,7 @@ export default function TaxReportsPage() {
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4">
-          <div className="text-sm text-muted-foreground">Total Coupons</div>
+          <div className="text-sm text-muted-foreground">Total Promotions</div>
           <div className="text-2xl font-bold text-foreground">{mockTaxData.length}</div>
           <div className="text-xs text-muted-foreground mt-1">All active & inactive</div>
         </Card>
@@ -69,7 +69,7 @@ export default function TaxReportsPage() {
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Total Usage</div>
           <div className="text-2xl font-bold text-primary">{totalUsage.toLocaleString()}</div>
-          <div className="text-xs text-muted-foreground mt-1">Coupon redemptions</div>
+          <div className="text-xs text-muted-foreground mt-1">Promotion redemptions</div>
         </Card>
         <Card className="p-4">
           <div className="text-sm text-muted-foreground">Active Campaigns</div>
@@ -84,7 +84,7 @@ export default function TaxReportsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <input
             type="text"
-            placeholder="Search coupon code..."
+            placeholder="Search promotion code..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="px-3 py-2 border border-border rounded-lg text-sm bg-background text-foreground"
@@ -120,7 +120,7 @@ export default function TaxReportsPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted border-b border-border">
               <tr>
-                <th className="px-6 py-3 text-left font-semibold text-foreground">Coupon Code</th>
+                <th className="px-6 py-3 text-left font-semibold text-foreground">Promotion Code</th>
                 <th className="px-6 py-3 text-left font-semibold text-foreground">Type</th>
                 <th className="px-6 py-3 text-left font-semibold text-foreground">Discount Value</th>
                 <th className="px-6 py-3 text-left font-semibold text-foreground">Total Discount</th>
@@ -134,7 +134,7 @@ export default function TaxReportsPage() {
             <tbody className="divide-y divide-border">
               {filteredData.map(item => (
                 <tr key={item.id} className="hover:bg-muted/50 transition-colors border-b border-border">
-                  <td className="px-6 py-4 font-semibold text-foreground">{item.couponCode}</td>
+                  <td className="px-6 py-4 font-semibold text-foreground">{item.promotionCode}</td>
                   <td className="px-6 py-4 capitalize text-sm text-muted-foreground">{item.type.replace('_', ' ')}</td>
                   <td className="px-6 py-4 font-semibold text-foreground">${item.discountValue}</td>
                   <td className="px-6 py-4 text-destructive font-semibold">${item.totalDiscounted.toLocaleString()}</td>

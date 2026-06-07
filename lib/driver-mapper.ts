@@ -5,6 +5,15 @@
 import type { Driver, DriverDocument, Vehicle } from '@/types/driver';
 
 /**
+ * Helper to safely parse dates
+ */
+const parseDate = (dateValue: any): Date => {
+  if (!dateValue) return new Date();
+  const parsed = new Date(dateValue);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
+};
+
+/**
  * Transforme les données brutes du backend en type Driver
  */
 export function mapBackendDriverToFrontend(backendDriver: any): Driver {
@@ -17,13 +26,13 @@ export function mapBackendDriverToFrontend(backendDriver: any): Driver {
       type: 'license',
       status: backendDriver.license_status || 'pending',
       expiryDate: backendDriver.license_expiry_date
-        ? new Date(backendDriver.license_expiry_date)
+        ? parseDate(backendDriver.license_expiry_date)
         : undefined,
       uploadedAt: backendDriver.license_verified_at
-        ? new Date(backendDriver.license_verified_at)
+        ? parseDate(backendDriver.license_verified_at)
         : new Date(),
       verifiedAt: backendDriver.license_verified_at
-        ? new Date(backendDriver.license_verified_at)
+        ? parseDate(backendDriver.license_verified_at)
         : undefined,
     });
   }
@@ -34,13 +43,13 @@ export function mapBackendDriverToFrontend(backendDriver: any): Driver {
       type: 'id',
       status: backendDriver.id_status || 'pending',
       expiryDate: backendDriver.id_expiry_date
-        ? new Date(backendDriver.id_expiry_date)
+        ? parseDate(backendDriver.id_expiry_date)
         : undefined,
       uploadedAt: backendDriver.id_verified_at
-        ? new Date(backendDriver.id_verified_at)
+        ? parseDate(backendDriver.id_verified_at)
         : new Date(),
       verifiedAt: backendDriver.id_verified_at
-        ? new Date(backendDriver.id_verified_at)
+        ? parseDate(backendDriver.id_verified_at)
         : undefined,
     });
   }
@@ -51,13 +60,13 @@ export function mapBackendDriverToFrontend(backendDriver: any): Driver {
       type: 'insurance',
       status: backendDriver.insurance_status || 'pending',
       expiryDate: backendDriver.insurance_expiry_date
-        ? new Date(backendDriver.insurance_expiry_date)
+        ? parseDate(backendDriver.insurance_expiry_date)
         : undefined,
       uploadedAt: backendDriver.insurance_verified_at
-        ? new Date(backendDriver.insurance_verified_at)
+        ? parseDate(backendDriver.insurance_verified_at)
         : new Date(),
       verifiedAt: backendDriver.insurance_verified_at
-        ? new Date(backendDriver.insurance_verified_at)
+        ? parseDate(backendDriver.insurance_verified_at)
         : undefined,
     });
   }
@@ -68,13 +77,13 @@ export function mapBackendDriverToFrontend(backendDriver: any): Driver {
       type: 'registration',
       status: backendDriver.registration_status || 'pending',
       expiryDate: backendDriver.registration_expiry_date
-        ? new Date(backendDriver.registration_expiry_date)
+        ? parseDate(backendDriver.registration_expiry_date)
         : undefined,
       uploadedAt: backendDriver.registration_verified_at
-        ? new Date(backendDriver.registration_verified_at)
+        ? parseDate(backendDriver.registration_verified_at)
         : new Date(),
       verifiedAt: backendDriver.registration_verified_at
-        ? new Date(backendDriver.registration_verified_at)
+        ? parseDate(backendDriver.registration_verified_at)
         : undefined,
     });
   }
@@ -85,13 +94,13 @@ export function mapBackendDriverToFrontend(backendDriver: any): Driver {
       type: 'background-check',
       status: backendDriver.background_check_status || 'pending',
       expiryDate: backendDriver.background_check_expiry_date
-        ? new Date(backendDriver.background_check_expiry_date)
+        ? parseDate(backendDriver.background_check_expiry_date)
         : undefined,
       uploadedAt: backendDriver.background_check_verified_at
-        ? new Date(backendDriver.background_check_verified_at)
+        ? parseDate(backendDriver.background_check_verified_at)
         : new Date(),
       verifiedAt: backendDriver.background_check_verified_at
-        ? new Date(backendDriver.background_check_verified_at)
+        ? parseDate(backendDriver.background_check_verified_at)
         : undefined,
     });
   }
@@ -109,7 +118,7 @@ export function mapBackendDriverToFrontend(backendDriver: any): Driver {
       capacity: backendDriver.vehicle_capacity_kg || 50,
       status: backendDriver.vehicle_status || 'active',
       lastInspection: backendDriver.vehicle_last_inspection
-        ? new Date(backendDriver.vehicle_last_inspection)
+        ? parseDate(backendDriver.vehicle_last_inspection)
         : undefined,
     };
   }
@@ -122,9 +131,9 @@ export function mapBackendDriverToFrontend(backendDriver: any): Driver {
     status: backendDriver.status || 'inactive',
     documents: documents,
     vehicle: vehicle,
-    joinDate: new Date(backendDriver.join_date),
+    joinDate: parseDate(backendDriver.join_date),
     lastActive: backendDriver.last_active
-      ? new Date(backendDriver.last_active)
+      ? parseDate(backendDriver.last_active)
       : undefined,
     currentLocation: backendDriver.current_lat && backendDriver.current_lng
       ? {

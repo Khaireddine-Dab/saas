@@ -47,7 +47,7 @@ function SortIcon({ col, sortKey, dir }: { col: string; sortKey: string; dir: 'a
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ItemsPage() {
   const router = useRouter();
-  const { items, isLoading, error, fetchItems } = useItems();
+  const { items, isLoading, error, fetchItems, deleteOrphanedItems } = useItems();
   
   useEffect(() => {
     fetchItems();
@@ -58,6 +58,7 @@ export default function ItemsPage() {
   const [searchTerm,    setSearchTerm]    = useState('');
   const [statusFilter,  setStatusFilter]  = useState<string | null>(null);
   const [typeFilter,    setTypeFilter]    = useState<string | null>(null);
+  const [isDeleting,    setIsDeleting]    = useState(false);
 
   if (isLoading) {
     return (
@@ -86,6 +87,9 @@ export default function ItemsPage() {
 
   const statusOptions = ['AVAILABLE', 'HIDDEN', 'FLAGGED', 'BANNED'] as const;
   const typeOptions = ['PRODUCT', 'SERVICE'];
+  
+  // Compter les items orphelins (sans store)
+  const orphanedCount = items.filter(i => !i.storeId || i.storeId === '').length;
   
   const statusCounts = {
     AVAILABLE: items.filter(i => i.status === 'AVAILABLE').length,
@@ -121,6 +125,29 @@ export default function ItemsPage() {
     else { setSortKey(key); setSortDir('asc'); }
   };
 
+  const handleDeleteOrphaned = async () => {
+    if (orphanedCount === 0) {
+      alert('Aucun item orphelin à supprimer.');
+      return;
+    }
+    
+    const confirmed = window.confirm(
+      `Êtes-vous sûr de vouloir supprimer tous les ${orphanedCount} item(s) orphelin(s) ? Cette action est irréversible.`
+    );
+    
+    if (!confirmed) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteOrphanedItems();
+      alert(`${orphanedCount} item(s) orphelin(s) ont été supprimés avec succès.`);
+    } catch (err) {
+      alert(`Erreur lors de la suppression des items orphelins: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const avgRating = items.length > 0 ? (items.reduce((s, i) => s + i.ratingAverage, 0) / items.length).toFixed(1) : '0';
 
   return (
@@ -134,6 +161,26 @@ export default function ItemsPage() {
         </div>
         {/* ── Action buttons ── */}
         <div className="flex items-center gap-2">
+          {orphanedCount > 0 && (
+            <Button 
+              size="sm" 
+              variant="destructive" 
+              className="gap-2"
+              onClick={handleDeleteOrphaned}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Suppression...
+                </>
+              ) : (
+                <>
+                  🗑️ Supprimer {orphanedCount} orphelin{orphanedCount > 1 ? 's' : ''}
+                </>
+              )}
+            </Button>
+          )}
           <Button size="sm" className="gap-2">
             <Plus className="w-4 h-4" />
             Ajouter Item
@@ -354,7 +401,7 @@ export default function ItemsPage() {
 
                 {/* Created */}
                 <div className="col-span-1 hidden lg:flex items-center">
-                  <span className="text-xs text-muted-foreground">{formatDate(item.createdAt.toISOString())}</span>
+                  <span className="text-xs text-muted-foreground">{formatDate(item.createdAt)}</span>
                 </div>
 
                 {/* View store button */}

@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   ChevronLeft, ChevronRight,
-  LayoutDashboard, Users, Briefcase, Truck, ShoppingCart,
-  Package, Star, Tag, Image as ImageIcon, Shield, Map,
+  LayoutDashboard, Users, Briefcase, ShoppingCart,
+  Package, Star, Tag, Film, Shield, Map,
   BarChart3, Settings, MessageCircle, AlertCircle,
-  Car, DollarSign, ReceiptText, RefreshCcw, CreditCard,
+  ReceiptText, CreditCard,
   Bell, FileText, Layers, LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -37,42 +37,19 @@ const navItems: NavItem[] = [
   { title: 'Reviews',             href: '/dashboard/reviews',                icon: <Star className="w-4 h-4 text-current" /> },
 
   { title: 'Marketing', section: true },
-  { title: 'Coupons',             href: '/dashboard/coupons',                icon: <Tag className="w-4 h-4 text-current" /> },
-  { title: 'Banners',             href: '/dashboard/banners',                icon: <ImageIcon className="w-4 h-4 text-current" /> },
+  { title: 'Promotions',          href: '/dashboard/promotions',             icon: <Tag className="w-4 h-4 text-current" /> },
+  { title: 'Reels & Stories',     href: '/dashboard/banners',                icon: <Film className="w-4 h-4 text-current" /> },
 
   { title: 'Operations', section: true },
   { title: 'Fraud Alerts',        href: '/dashboard/fraud',                  icon: <Shield className="w-4 h-4 text-current" /> },
   { title: 'Map',                 href: '/dashboard/map',                    icon: <Map className="w-4 h-4 text-current" /> },
-  { title: 'Analytics',           href: '/dashboard/analytics',              icon: <BarChart3 className="w-4 h-4 text-current" /> },
-
-  { title: 'Administration', section: true },
-  { title: 'Roles & Permissions', href: '/dashboard/admin/roles',            icon: <Settings className="w-4 h-4 text-current" /> },
-  { title: 'Categories',          href: '/dashboard/admin/categories',       icon: <Layers className="w-4 h-4 text-current" /> },
-  { title: 'Brands',              href: '/dashboard/admin/brands',           icon: <Briefcase className="w-4 h-4 text-current" /> },
-  { title: 'Tax & Discount',      href: '/dashboard/admin/tax-reports',      icon: <ReceiptText className="w-4 h-4 text-current" /> },
-
 
   { title: 'Support', section: true },
   { title: 'Support Tickets',     href: '/dashboard/support/tickets',        icon: <AlertCircle className="w-4 h-4 text-current" /> },
   { title: 'Live Chat',           href: '/dashboard/support/chat',           icon: <MessageCircle className="w-4 h-4 text-current" /> },
 
-  { title: 'Payments', section: true },
-  { title: 'Transactions',        href: '/dashboard/payments/transactions',  icon: <CreditCard className="w-4 h-4 text-current" /> },
-  { title: 'Refunds',             href: '/dashboard/payments/refunds',       icon: <RefreshCcw className="w-4 h-4 text-current" /> },
-  { title: 'Subscriptions',       href: '/dashboard/payments/subscriptions', icon: <Tag className="w-4 h-4 text-current" /> },
-
-  { title: 'Reports', section: true },
-  { title: 'Sales Reports',       href: '/dashboard/reports/sales',          icon: <BarChart3 className="w-4 h-4 text-current" /> },
-  { title: 'Orders Reports',      href: '/dashboard/reports/orders',         icon: <Package className="w-4 h-4 text-current" /> },
-
   { title: 'Communications', section: true },
   { title: 'Notification Center', href: '/dashboard/notifications',          icon: <Bell className="w-4 h-4 text-current" /> },
-
-  { title: 'Content Management', section: true },
-  { title: 'CMS Pages',           href: '/dashboard/cms-pages',              icon: <FileText className="w-4 h-4 text-current" /> },
-
-  { title: 'System', section: true },
-  { title: 'Settings',            href: '/dashboard/settings',               icon: <Settings className="w-4 h-4 text-current" /> },
 ];
 
 // ─── Active Route Helper ──────────────────────────────────────────────────────

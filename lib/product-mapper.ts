@@ -8,6 +8,13 @@ import type { Product } from '@/types/product';
  * Transforme les données brutes du backend en type Product
  */
 export function mapBackendProductToFrontend(backendProduct: any): Product {
+  // Helper to safely parse dates
+  const parseDate = (dateValue: any): Date => {
+    if (!dateValue) return new Date();
+    const parsed = new Date(dateValue);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  };
+
   return {
     id: String(backendProduct.id),
     businessId: String(backendProduct.store || ''),
@@ -28,12 +35,12 @@ export function mapBackendProductToFrontend(backendProduct: any): Product {
     visibility: mapBackendVisibility(backendProduct.visibility),
     featured: backendProduct.featured || false,
     featuredUntil: backendProduct.featured_until
-      ? new Date(backendProduct.featured_until)
+      ? parseDate(backendProduct.featured_until)
       : undefined,
-    createdAt: new Date(backendProduct.created_at),
-    updatedAt: new Date(backendProduct.updated_at),
+    createdAt: parseDate(backendProduct.created_at),
+    updatedAt: parseDate(backendProduct.updated_at),
     lastModeratedAt: backendProduct.last_moderated_at
-      ? new Date(backendProduct.last_moderated_at)
+      ? parseDate(backendProduct.last_moderated_at)
       : undefined,
   };
 }

@@ -1,4 +1,4 @@
-export type RolePermission = 'manage_users' | 'manage_orders' | 'manage_products' | 'manage_coupons' | 'manage_banners' | 'manage_fraud' | 'manage_settings' | 'manage_admins' | 'view_analytics' | 'view_reports';
+export type RolePermission = 'manage_users' | 'manage_orders' | 'manage_products' | 'manage_promotions' | 'manage_banners' | 'manage_fraud' | 'manage_settings' | 'manage_admins' | 'view_analytics' | 'view_reports';
 export type AdminRole = 'super_admin' | 'admin' | 'moderator' | 'analyst' | 'support';
 
 export interface AdminUser {

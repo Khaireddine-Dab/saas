@@ -25,6 +25,6 @@ export const mockKPIs: { label: string; value: number; change: number; percentag
   { label: 'Brands', value: 840, change: 12, percentageChange: 1.4, trend: 'up', icon: 'tag' },
   { label: 'Products', value: 145200, change: 1240, percentageChange: 0.9, trend: 'up', icon: 'box' },
   { label: 'Deals', value: 342, change: 15, percentageChange: 4.6, trend: 'up', icon: 'percent' },
-  { label: 'Coupons', value: 124, change: -5, percentageChange: -3.8, trend: 'down', icon: 'ticket' },
+  { label: 'Promotions', value: 124, change: -5, percentageChange: -3.8, trend: 'down', icon: 'ticket' },
   { label: 'New Reviews Today', value: 87, change: 12, percentageChange: 16.0, trend: 'up', icon: 'star' },
 ];

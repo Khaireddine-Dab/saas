@@ -33,6 +33,15 @@ export interface FrontendTransaction {
 }
 
 /**
+ * Helper to safely parse dates
+ */
+const parseDate = (dateValue: any): Date => {
+  if (!dateValue) return new Date();
+  const parsed = new Date(dateValue);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
+};
+
+/**
  * Map a backend transaction list item to frontend format
  */
 export function mapBackendTransactionToFrontend(
@@ -43,14 +52,14 @@ export function mapBackendTransactionToFrontend(
   const netAmount = parseFloat(backendTxn.net_amount);
 
   // Parse dates
-  const timeCreated = new Date(backendTxn.time_created);
-  const timeAccepted = backendTxn.time_accepted ? new Date(backendTxn.time_accepted) : null;
+  const timeCreated = parseDate(backendTxn.time_created);
+  const timeAccepted = backendTxn.time_accepted ? parseDate(backendTxn.time_accepted) : null;
   
   // Handle detail fields that may not exist on list items
   const detail = backendTxn as Partial<BackendTransactionDetail>;
-  const collectionTime = detail.collection_time ? new Date(detail.collection_time) : null;
-  const pickupTime = detail.pickup_time ? new Date(detail.pickup_time) : null;
-  const timeDelivered = detail.time_delivered ? new Date(detail.time_delivered) : null;
+  const collectionTime = detail.collection_time ? parseDate(detail.collection_time) : null;
+  const pickupTime = detail.pickup_time ? parseDate(detail.pickup_time) : null;
+  const timeDelivered = detail.time_delivered ? parseDate(detail.time_delivered) : null;
   const waitDuration = detail.wait_duration_minutes ?? null;
   const deliveryDuration = detail.delivery_duration_minutes ?? null;
   const km = detail.km ?? null;

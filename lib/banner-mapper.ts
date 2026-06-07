@@ -2,6 +2,15 @@ import type { BannerAPIResponse } from '@/types/backend-banner';
 import type { Banner } from '@/types/banner';
 
 /**
+ * Helper to safely parse dates
+ */
+const parseDate = (dateValue: any): Date => {
+  if (!dateValue) return new Date();
+  const parsed = new Date(dateValue);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
+};
+
+/**
  * Map a banner from the backend API to the frontend Banner format
  * Transformations:
  * - snake_case → camelCase
@@ -18,13 +27,13 @@ export function mapBannerFromAPI(bannerAPI: BannerAPIResponse): Banner {
     targetUrl: bannerAPI.target_url || '',
     status: bannerAPI.status,
     priority: bannerAPI.priority,
-    startDate: new Date(bannerAPI.start_date),
-    endDate: new Date(bannerAPI.end_date),
+    startDate: parseDate(bannerAPI.start_date),
+    endDate: parseDate(bannerAPI.end_date),
     impressions: bannerAPI.impressions,
     clicks: bannerAPI.clicks,
     conversionRate: bannerAPI.conversion_rate,
-    createdAt: new Date(bannerAPI.created_at),
-    updatedAt: new Date(bannerAPI.updated_at),
+    createdAt: parseDate(bannerAPI.created_at),
+    updatedAt: parseDate(bannerAPI.updated_at),
     createdBy: bannerAPI.created_by || 'admin',
   };
 }

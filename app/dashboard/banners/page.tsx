@@ -1,570 +1,382 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Download, Filter, Plus, Search, Image as ImageIcon, Eye, X } from 'lucide-react';
-import { useBanners } from '@/hooks/useBanners';
-import { useBannerMutations } from '@/hooks/useBannerMutations';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState } from 'react';
+import { useReels } from '@/hooks/useReels';
+import { useStories } from '@/hooks/useStories';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { BannerStatus, BannerPlacement } from '@/types/banner';
-import type { CreateBannerInput } from '@/hooks/useBannerMutations';
+import { Button } from '@/components/ui/button';
+import { Eye, Heart, MousePointerClick, MessageCircle, Trash2 } from 'lucide-react';
+import type { Reel, Story } from '@/types/reels';
 
-const statusColors: Record<BannerStatus, string> = {
-  draft: 'bg-muted text-muted-foreground border-border',
-  scheduled: 'bg-primary/20 text-primary border-primary/40',
-  active: 'bg-green-500/20 text-green-500 border-green-500/40',
-  inactive: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/40',
-  expired: 'bg-red-500/20 text-red-500 border-red-500/40',
-};
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-const placementLabels: Record<BannerPlacement, string> = {
-  homepage: 'Home Page',
-  category: 'Category',
-  checkout: 'Checkout',
-  popup: 'Popup',
-};
+function getToken() {
+  return typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+}
 
-export default function BannersPage() {
-  const [statusFilter, setStatusFilter] = useState<BannerStatus | undefined>();
-  const [placementFilter, setPlacementFilter] = useState<BannerPlacement | undefined>();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isClient, setIsClient] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [storeId, setStoreId] = useState<number>(1); // Default store ID
-  const [filePreview, setFilePreview] = useState<string | null>(null);
-  const [uploadedFileName, setUploadedFileName] = useState<string>('');
-  const { banners, statistics } = useBanners({ status: statusFilter, placement: placementFilter, search: searchQuery });
-  const { createBanner, isLoading: isCreating, error: createError, clearError } = useBannerMutations();
+function getMediaUrl(path: string | undefined | null) {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE}${cleanPath}`;
+}
 
-  const [formData, setFormData] = useState<CreateBannerInput>({
-    title: '',
-    description: '',
-    image_url: '',
-    target_url: '',
-    placement: 'homepage',
-    status: 'draft',
-    priority: 1,
-    start_date: new Date().toISOString().split('T')[0],
-    end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    conversion_rate: 0.01,
-    created_by: 'admin',
-    store_id: storeId,
+async function apiDelete(endpoint: string) {
+  const token = getToken();
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    method: 'DELETE',
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
+  if (!res.ok) throw new Error(`Delete failed: ${res.statusText}`);
+}
 
-  // Prevent hydration error by only rendering dynamic content on client
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+// ─── Confirmation Dialog ─────────────────────────────────────────────────────
+interface ConfirmDialogProps {
+  open: boolean;
+  title: string;
+  description: string;
+  isLoading?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
 
-  const displayStats = isClient ? statistics : {
-    totalBanners: 0,
-    activeBanners: 0,
-    totalImpressions: 0,
-    totalClicks: 0,
-    avgClickRate: 0,
+function ConfirmDialog({ open, title, description, isLoading, onConfirm, onCancel }: ConfirmDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onCancel()}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onCancel} disabled={isLoading}>Cancel</Button>
+          <Button variant="destructive" onClick={onConfirm} disabled={isLoading}>
+            {isLoading ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+export default function ReelsAndStoriesPage() {
+  const { reels, isLoading: loadingReels, refresh: refreshReels } = useReels();
+  const { stories, isLoading: loadingStories, refresh: refreshStories } = useStories();
+
+  // Comments state
+  const [selectedReel, setSelectedReel] = useState<Reel | null>(null);
+
+  // Delete reel state
+  const [reelToDelete, setReelToDelete] = useState<Reel | null>(null);
+  const [deletingReel, setDeletingReel] = useState(false);
+
+  // Delete story state
+  const [storyToDelete, setStoryToDelete] = useState<Story | null>(null);
+  const [deletingStory, setDeletingStory] = useState(false);
+
+  // Delete comment
+  const handleDeleteComment = async (commentId: number) => {
+    try {
+      await apiDelete(`/api/reel-comments/${commentId}/`);
+      refreshReels();
+      if (selectedReel) {
+        setSelectedReel({
+          ...selectedReel,
+          comments: selectedReel.comments?.filter(c => c.id !== commentId),
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error deleting comment');
+    }
   };
 
-  const handleCreateBanner = async () => {
-    if (!formData.title.trim()) {
-      alert('Please enter a banner title');
-      return;
-    }
-    if (!formData.start_date || !formData.end_date) {
-      alert('Please select valid dates');
-      return;
-    }
-    if (new Date(formData.start_date) > new Date(formData.end_date)) {
-      alert('Start date must be before end date');
-      return;
-    }
-
-    const result = await createBanner({
-      ...formData,
-      store_id: storeId,
-    });
-
-    if (result) {
-      // Reset form and close modal
-      setFormData({
-        title: '',
-        description: '',
-        image_url: '',
-        target_url: '',
-        placement: 'homepage',
-        status: 'draft',
-        priority: 1,
-        start_date: new Date().toISOString().split('T')[0],
-        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        conversion_rate: 0.01,
-        created_by: 'admin',
-        store_id: storeId,
-      });
-      setFilePreview(null);
-      setUploadedFileName('');
-      setShowCreateModal(false);
-      // Optionally refresh banners here if you implement a refetch mechanism
+  // Delete reel
+  const handleDeleteReel = async () => {
+    if (!reelToDelete) return;
+    setDeletingReel(true);
+    try {
+      await apiDelete(`/api/reels/${reelToDelete.id}/`);
+      refreshReels();
+      setReelToDelete(null);
+    } catch (e) {
+      console.error(e);
+      alert('Error deleting reel');
+    } finally {
+      setDeletingReel(false);
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type (images and videos)
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
-    if (!validTypes.includes(file.type)) {
-      alert('Please select a valid image (JPG, PNG, GIF, WebP) or video (MP4, WebM)');
-      return;
+  // Delete story
+  const handleDeleteStory = async () => {
+    if (!storyToDelete) return;
+    setDeletingStory(true);
+    try {
+      await apiDelete(`/api/stories/${storyToDelete.id}/`);
+      refreshStories();
+      setStoryToDelete(null);
+    } catch (e) {
+      console.error(e);
+      alert('Error deleting story');
+    } finally {
+      setDeletingStory(false);
     }
-
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
-      alert('File size must be less than 10MB');
-      return;
-    }
-
-    setUploadedFileName(file.name);
-
-    // Create a preview URL
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      setFilePreview(result);
-      // Use the preview as the image_url (base64 encoded)
-      setFormData({ ...formData, image_url: result });
-    };
-    reader.readAsDataURL(file);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Banner Management</h1>
-          <p className="text-muted-foreground">Create and schedule promotional banners</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Banner
-          </Button>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Reels & Stories</h1>
+        <p className="text-muted-foreground">Manage your visual content and engagement.</p>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="text-sm text-muted-foreground">Total Banners</div>
-          <div className="text-2xl font-bold text-foreground">{displayStats.totalBanners}</div>
-          <div className="text-xs text-muted-foreground mt-1">All banners</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-sm text-muted-foreground">Active</div>
-          <div className="text-2xl font-bold text-green-500">{displayStats.activeBanners}</div>
-          <div className="text-xs text-muted-foreground mt-1">Currently live</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-sm text-muted-foreground">Total Impressions</div>
-          <div className="text-2xl font-bold text-foreground">{(displayStats.totalImpressions / 1000).toFixed(0)}K</div>
-          <div className="text-xs text-muted-foreground mt-1">Views</div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-sm text-muted-foreground">Avg Click Rate</div>
-          <div className="text-2xl font-bold text-foreground">{(displayStats.avgClickRate * 100).toFixed(2)}%</div>
-          <div className="text-xs text-muted-foreground mt-1">CTR</div>
-        </Card>
-      </div>
+      <Tabs defaultValue="reels" className="w-full">
+        <TabsList>
+          <TabsTrigger value="reels">Reels ({reels.length})</TabsTrigger>
+          <TabsTrigger value="stories">Stories ({stories.length})</TabsTrigger>
+        </TabsList>
 
-      {/* Filters */}
-      <Card className="p-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-2">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by banner title..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <select
-              value={statusFilter || ''}
-              onChange={e => setStatusFilter(e.target.value as BannerStatus || undefined)}
-              className="px-3 py-2 rounded-lg border border-border text-sm bg-background text-foreground hover:bg-muted transition-colors"
-            >
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="scheduled">Scheduled</option>
-              <option value="draft">Draft</option>
-              <option value="inactive">Inactive</option>
-              <option value="expired">Expired</option>
-            </select>
-            <select
-              value={placementFilter || ''}
-              onChange={e => setPlacementFilter(e.target.value as BannerPlacement || undefined)}
-              className="px-3 py-2 rounded-lg border border-border text-sm bg-background text-foreground hover:bg-muted transition-colors"
-            >
-              <option value="">All Placements</option>
-              <option value="homepage">Home Page</option>
-              <option value="category">Category</option>
-              <option value="checkout">Checkout</option>
-              <option value="popup">Popup</option>
-            </select>
-            <Button variant="outline" size="sm">
-              <Filter className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </Card>
-
-      {/* Banners Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {banners.length > 0 ? (
-          banners.slice(0, 8).map(banner => (
-            <Card key={banner.id} className="overflow-hidden hover:shadow-md transition">
-              <div className="aspect-video bg-muted overflow-hidden relative">
-                <img
-                  src={banner.imageUrl}
-                  alt={banner.title}
-                  className="w-full h-full object-cover"
+        {/* ── Reels Tab ── */}
+        <TabsContent value="reels" className="mt-6">
+          {loadingReels ? (
+            <div className="text-muted-foreground py-12 text-center">Loading Reels…</div>
+          ) : reels.length === 0 ? (
+            <div className="text-muted-foreground py-12 text-center">No reels found.</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {reels.map((reel) => (
+                <ReelCard
+                  key={reel.id}
+                  reel={reel}
+                  onOpenComments={() => setSelectedReel(reel)}
+                  onDelete={() => setReelToDelete(reel)}
                 />
-              </div>
-              <div className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="font-semibold text-foreground">{banner.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{banner.description}</p>
-                  </div>
-                  <Badge className={statusColors[banner.status]}>
-                    {banner.status.charAt(0).toUpperCase() + banner.status.slice(1)}
-                  </Badge>
-                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
-                <div className="grid grid-cols-3 gap-2 py-3 border-t border-b border-border my-3">
-                  <div className="text-center">
-                    <div className="text-xs text-muted-foreground font-medium">Impressions</div>
-                    <div className="font-bold text-foreground">{(banner.impressions / 1000).toFixed(1)}K</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xs text-muted-foreground font-medium">Clicks</div>
-                    <div className="font-bold text-foreground">{banner.clicks}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xs text-muted-foreground font-medium">CTR</div>
-                    <div className="font-bold text-foreground">{((banner.clicks / banner.impressions) * 100).toFixed(2)}%</div>
-                  </div>
-                </div>
+        {/* ── Stories Tab ── */}
+        <TabsContent value="stories" className="mt-6">
+          {loadingStories ? (
+            <div className="text-muted-foreground py-12 text-center">Loading Stories…</div>
+          ) : stories.length === 0 ? (
+            <div className="text-muted-foreground py-12 text-center">No stories found.</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {stories.map((story) => (
+                <StoryCard
+                  key={story.id}
+                  story={story}
+                  onDelete={() => setStoryToDelete(story)}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
-                <div className="flex items-center justify-between text-sm mb-3">
-                  <span className="text-muted-foreground">
-                    <strong className="text-foreground">Placement:</strong> {placementLabels[banner.placement]}
-                  </span>
-                  <span className="text-muted-foreground">
-                    <strong className="text-foreground">Priority:</strong> {banner.priority}
-                  </span>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" className="flex-1">
-                    <Eye className="w-3 h-3 mr-1" />
-                    Preview
+      {/* ── Comments Dialog ── */}
+      <Dialog open={!!selectedReel} onOpenChange={(open) => !open && setSelectedReel(null)}>
+        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Comments — "{selectedReel?.title}"</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            {!selectedReel?.comments?.length ? (
+              <p className="text-muted-foreground text-center py-8">No comments yet.</p>
+            ) : (
+              selectedReel.comments.map((comment) => (
+                <div key={comment.id} className="flex items-start justify-between gap-3 p-3 border rounded-lg bg-card/50">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">
+                      User <span className="font-mono">{comment.user_id?.substring(0, 8)}…</span>
+                    </p>
+                    <p className="text-sm text-foreground break-words">{comment.content}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {new Date(comment.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 text-red-500 hover:text-red-700 hover:bg-red-500/10"
+                    onClick={() => handleDeleteComment(comment.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="outline" className="flex-1">Edit</Button>
                 </div>
-              </div>
-            </Card>
-          ))
-        ) : (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
-            No banners found
+              ))
+            )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Reel Confirm ── */}
+      <ConfirmDialog
+        open={!!reelToDelete}
+        title="Delete Reel"
+        description={`Are you sure you want to permanently delete "${reelToDelete?.title}"? This action cannot be undone.`}
+        isLoading={deletingReel}
+        onConfirm={handleDeleteReel}
+        onCancel={() => setReelToDelete(null)}
+      />
+
+      {/* ── Delete Story Confirm ── */}
+      <ConfirmDialog
+        open={!!storyToDelete}
+        title="Delete Story"
+        description={`Are you sure you want to permanently delete this story${storyToDelete?.caption ? ` "${storyToDelete.caption}"` : ''}? This action cannot be undone.`}
+        isLoading={deletingStory}
+        onConfirm={handleDeleteStory}
+        onCancel={() => setStoryToDelete(null)}
+      />
+    </div>
+  );
+}
+
+// ─── Reel Card ────────────────────────────────────────────────────────────────
+function ReelCard({
+  reel,
+  onOpenComments,
+  onDelete,
+}: {
+  reel: Reel;
+  onOpenComments: () => void;
+  onDelete: () => void;
+}) {
+  const stats = reel.stats ?? { views_count: 0, likes_count: 0, clicks_count: 0, contact_count: 0, saves_count: 0, reel_id: 0, updated_at: '' };
+  const commentsCount = reel.comments?.length ?? 0;
+
+  return (
+    <Card className="overflow-hidden flex flex-col relative group">
+      {/* Media */}
+      <div className="relative aspect-[9/16] bg-black">
+        {reel.media_path ? (
+          reel.media_path.match(/\.(mp4|webm|ogg)$/i) ? (
+            <video src={getMediaUrl(reel.media_path)} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" autoPlay muted loop playsInline />
+          ) : (
+            <img src={getMediaUrl(reel.media_path)} alt={reel.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+          )
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-white/40 text-sm">No Media</div>
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+
+        {/* Badges */}
+        <div className="absolute top-3 left-3 flex gap-2">
+          <Badge variant={reel.status === 'active' ? 'default' : 'secondary'}>{reel.status}</Badge>
+          {reel.is_sponsored && <Badge variant="outline" className="bg-black/50 text-white border-white/30">Sponsored</Badge>}
+        </div>
+
+        {/* Delete button – appears on hover */}
+        <button
+          onClick={onDelete}
+          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-red-600/80 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Delete reel"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+
+        {/* Title */}
+        <div className="absolute bottom-4 left-4 right-4">
+          <h3 className="text-white font-semibold text-base leading-snug">{reel.title}</h3>
+          {reel.subtitle && <p className="text-white/70 text-xs mt-0.5">{reel.subtitle}</p>}
+        </div>
       </div>
 
-      {/* Create Banner Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 space-y-4">
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-border pb-4">
-                <h2 className="text-xl font-bold text-foreground">Create New Banner</h2>
-                <button
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    clearError();
-                  }}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+      {/* Stats bar */}
+      <div className="p-3 grid grid-cols-4 gap-1 text-center border-t">
+        <StatItem icon={<Eye className="w-3.5 h-3.5" />} value={stats.views_count} />
+        <StatItem icon={<Heart className="w-3.5 h-3.5" />} value={stats.likes_count} />
+        <StatItem
+          icon={<MessageCircle className="w-3.5 h-3.5" />}
+          value={commentsCount}
+          onClick={onOpenComments}
+          clickable
+        />
+        <StatItem icon={<MousePointerClick className="w-3.5 h-3.5" />} value={stats.clicks_count} />
+      </div>
+    </Card>
+  );
+}
 
-              {/* Error Message */}
-              {createError && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm">
-                  {createError}
-                </div>
-              )}
+// ─── Story Card ───────────────────────────────────────────────────────────────
+function StoryCard({ story, onDelete }: { story: Story; onDelete: () => void }) {
+  const viewsCount = story.views?.length || story.views_count || 0;
 
-              {/* Form */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Title */}
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Title *</label>
-                  <Input
-                    placeholder="e.g., Summer Sale"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData({ ...formData, title: e.target.value })
-                    }
-                  />
-                </div>
+  return (
+    <Card className="overflow-hidden flex flex-col relative group">
+      {/* Media */}
+      <div className="relative aspect-[9/16] bg-black">
+        {story.media_url ? (
+          story.media_url.match(/\.(mp4|webm|ogg)$/i) ? (
+            <video src={getMediaUrl(story.media_url)} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" autoPlay muted loop playsInline />
+          ) : (
+            <img src={getMediaUrl(story.media_url)} alt="Story" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+          )
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-white/40 text-sm">No Media</div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
-                {/* Placement */}
-                <div>
-                  <label className="block text-sm font-semibold mb-1 text-foreground">Placement *</label>
-                  <select
-                    value={formData.placement}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        placement: e.target.value as any,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background text-foreground focus:ring-2 focus:ring-primary outline-none"
-                  >
-                    <option value="homepage">Home Page</option>
-                    <option value="category">Category</option>
-                    <option value="checkout">Checkout</option>
-                    <option value="popup">Popup</option>
-                  </select>
-                </div>
-
-                {/* Status */}
-                <div>
-                  <label className="block text-sm font-semibold mb-1 text-foreground">Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        status: e.target.value as any,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background text-foreground focus:ring-2 focus:ring-primary outline-none"
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="scheduled">Scheduled</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="expired">Expired</option>
-                  </select>
-                </div>
-
-                {/* Priority */}
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Priority</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={formData.priority}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        priority: parseInt(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </div>
-
-                {/* Start Date */}
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Start Date *</label>
-                  <Input
-                    type="date"
-                    value={formData.start_date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, start_date: e.target.value })
-                    }
-                  />
-                </div>
-
-                {/* End Date */}
-                <div>
-                  <label className="block text-sm font-semibold mb-1">End Date *</label>
-                  <Input
-                    type="date"
-                    value={formData.end_date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, end_date: e.target.value })
-                    }
-                  />
-                </div>
-
-                {/* Description */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-1">Description</label>
-                  <textarea
-                    placeholder="Banner description..."
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background text-foreground focus:ring-2 focus:ring-primary outline-none"
-                    rows={3}
-                  />
-                </div>
-
-                {/* Image/Video Upload */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-2">Banner Media (Image or Video)</label>
-                  
-                  {/* File Upload Area */}
-                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer mb-3"
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const files = e.dataTransfer.files;
-                      if (files.length > 0) {
-                        const event = {
-                          target: { files }
-                        } as any;
-                        handleFileChange(event);
-                      }
-                    }}
-                  >
-                    <input
-                      type="file"
-                      accept="image/*,video/*"
-                      onChange={handleFileChange}
-                      className="hidden"
-                      id="banner-file-input"
-                    />
-                    <label htmlFor="banner-file-input" className="cursor-pointer block">
-                      <div className="text-muted-foreground mb-2">
-                        <ImageIcon className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                        <div className="text-sm mb-1">
-                          <span className="font-medium text-foreground">Click to upload</span> or drag and drop
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          PNG, JPG, GIF, WebP, MP4 or WebM (Max 10MB)
-                        </div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* File Preview */}
-                  {filePreview && (
-                    <div className="mb-3 rounded-lg overflow-hidden bg-muted p-2">
-                      <div className="text-xs text-muted-foreground mb-2">
-                        Selected: <span className="text-foreground font-medium">{uploadedFileName}</span>
-                      </div>
-                      {uploadedFileName.includes('.mp4') || uploadedFileName.includes('.webm') ? (
-                        <video 
-                          src={filePreview} 
-                          className="w-full h-48 object-cover rounded" 
-                          controls 
-                        />
-                      ) : (
-                        <img 
-                          src={filePreview} 
-                          alt="Preview" 
-                          className="w-full h-48 object-cover rounded"
-                        />
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFilePreview(null);
-                          setUploadedFileName('');
-                          setFormData({ ...formData, image_url: '' });
-                        }}
-                        className="mt-2 text-xs text-red-500 hover:text-red-600"
-                      >
-                        Remove file
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Alternative URL Input */}
-                  <div className="space-y-2">
-                    <div className="text-xs text-muted-foreground">Or paste image/video URL:</div>
-                    <Input
-                      placeholder="https://example.com/banner.jpg"
-                      value={filePreview ? '' : formData.image_url}
-                      onChange={(e) =>
-                        setFormData({ ...formData, image_url: e.target.value })
-                      }
-                      disabled={!!filePreview}
-                    />
-                  </div>
-                </div>
-
-                {/* Target URL */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-1">Target URL</label>
-                  <Input
-                    placeholder="/promotions/summer-sale"
-                    value={formData.target_url}
-                    onChange={(e) =>
-                      setFormData({ ...formData, target_url: e.target.value })
-                    }
-                  />
-                </div>
-
-                {/* Conversion Rate */}
-                <div>
-                  <label className="block text-sm font-semibold mb-1">Conversion Rate</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={formData.conversion_rate || 0}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        conversion_rate: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2 border-t border-border pt-4 mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    clearError();
-                  }}
-                  disabled={isCreating}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleCreateBanner}
-                  disabled={isCreating}
-                  className="flex-1"
-                >
-                  {isCreating ? 'Creating...' : 'Create Banner'}
-                </Button>
-              </div>
-            </div>
-          </Card>
+        {/* Badge */}
+        <div className="absolute top-3 left-3">
+          <Badge variant={story.is_active ? 'default' : 'secondary'}>
+            {story.is_active ? 'Active' : 'Expired'}
+          </Badge>
         </div>
-      )}
+
+        {/* Delete button – appears on hover */}
+        <button
+          onClick={onDelete}
+          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-red-600/80 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Delete story"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+
+        {/* Caption */}
+        <div className="absolute bottom-4 left-4 right-4">
+          {story.caption && <p className="text-white font-medium text-sm">{story.caption}</p>}
+          <p className="text-white/60 text-xs mt-1">Expires: {new Date(story.expires_at).toLocaleDateString()}</p>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="p-3 flex items-center gap-2 border-t text-muted-foreground">
+        <Eye className="w-3.5 h-3.5" />
+        <span className="text-xs font-medium">{viewsCount} Views</span>
+      </div>
+    </Card>
+  );
+}
+
+// ─── Stat Item ────────────────────────────────────────────────────────────────
+function StatItem({
+  icon,
+  value,
+  onClick,
+  clickable,
+}: {
+  icon: React.ReactNode;
+  value: number;
+  onClick?: () => void;
+  clickable?: boolean;
+}) {
+  return (
+    <div
+      onClick={onClick}
+      className={`flex flex-col items-center justify-center gap-0.5 ${
+        clickable ? 'cursor-pointer hover:text-primary transition-colors' : ''
+      }`}
+    >
+      <span className="text-muted-foreground">{icon}</span>
+      <span className="text-xs font-medium">{value}</span>
     </div>
   );
 }

@@ -25,15 +25,25 @@ class ItemSerializer(serializers.ModelSerializer):
 
 
 class ItemListSerializer(serializers.ModelSerializer):
-    """Lightweight serializer for list views"""
+    """Lightweight serializer for list views with basic store info"""
     item_type_display = serializers.CharField(source='get_item_type_display', read_only=True)
+    store_details = serializers.SerializerMethodField()
+    
+    def get_store_details(self, obj):
+        if obj.store:
+            return {
+                'id': obj.store.id,
+                'name': obj.store.name
+            }
+        return None
     
     class Meta:
         model = Item
         fields = [
             'id', 'item_type', 'item_type_display', 'name', 'price',
             'main_image', 'rating_average', 'total_reviews', 'is_bookable',
-            'stock_quantity', 'view_count', 'order_count', 'booking_count'
+            'stock_quantity', 'view_count', 'order_count', 'booking_count',
+            'store', 'store_details'
         ]
 
 

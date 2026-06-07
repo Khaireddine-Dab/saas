@@ -17,37 +17,38 @@ class ReviewFlagSerializer(serializers.ModelSerializer):
 
 class ReviewListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for list views"""
-    user_details = UserSerializer(source='user', read_only=True)
-    product_details = ProductSerializer(source='product', read_only=True)
+    author_details = UserSerializer(source='author', read_only=True)
+    item_details = ProductSerializer(source='item', read_only=True)
     store_details = StoreSerializer(source='store', read_only=True)
 
     class Meta:
         model = Review
         fields = [
-            'id', 'product', 'product_details', 'store', 'store_details',
-            'user', 'user_details', 'rating', 'title', 'status',
-            'spam_score', 'risk_level', 'flagged', 'verified',
-            'helpful', 'unhelpful', 'created_at'
+            'id', 'item', 'item_details', 'store', 'store_details',
+            'author', 'author_details', 'rating', 'title', 'is_approved',
+            'is_spam', 'is_verified', 'sentiment_score', 'sentiment_label',
+            'created_at'
         ]
 
 
 class ReviewDetailSerializer(serializers.ModelSerializer):
     """Full serializer with all details"""
-    user_details = UserSerializer(source='user', read_only=True)
-    product_details = ProductSerializer(source='product', read_only=True)
+    author_details = UserSerializer(source='author', read_only=True)
+    item_details = ProductSerializer(source='item', read_only=True)
     store_details = StoreSerializer(source='store', read_only=True)
     flags = ReviewFlagSerializer(many=True, read_only=True)
 
     class Meta:
         model = Review
         fields = [
-            'id', 'product', 'product_details', 'store', 'store_details',
-            'user', 'user_details', 'rating', 'title', 'content', 'status',
-            'spam_score', 'risk_level', 'flagged', 'flag_count',
-            'rejection_reason', 'verified', 'helpful', 'unhelpful',
-            'flags', 'created_at', 'updated_at', 'approved_at'
+            'id', 'item', 'item_details', 'store', 'store_details',
+            'author', 'author_details', 'rating', 'title', 'comment', 'is_approved',
+            'is_spam', 'is_verified', 'sentiment_score', 'sentiment_label',
+            'vendor_response', 'vendor_response_ai_suggestion', 'responded_at',
+            'qr_token', 'qr_scanned_at', 'image_1', 'image_2',
+            'flags', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'spam_score', 'risk_level']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'sentiment_score', 'sentiment_label']
 
 
 class ReviewCreateUpdateSerializer(serializers.ModelSerializer):
@@ -55,7 +56,7 @@ class ReviewCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = [
-            'product', 'store', 'user', 'rating', 'title', 'content'
+            'item', 'store', 'author', 'rating', 'title', 'comment'
         ]
 
 
@@ -64,5 +65,6 @@ class ReviewModerationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = [
-            'status', 'spam_score', 'risk_level', 'rejection_reason', 'flagged'
+            'is_approved', 'is_spam', 'sentiment_score', 'sentiment_label',
+            'vendor_response', 'vendor_response_ai_suggestion'
         ]

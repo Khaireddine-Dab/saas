@@ -260,6 +260,16 @@ export const itemsApi = {
         apiRequest<any[]>(`/api/items/store/${storeId}/`, {
             method: 'GET'
         }),
+
+    listOrphaned: () =>
+        apiRequest<any[]>('/api/items/orphaned/', {
+            method: 'GET'
+        }),
+
+    deleteOrphaned: () =>
+        apiRequest<any>('/api/items/orphaned/delete/', {
+            method: 'DELETE'
+        }),
 };
 
 /**
@@ -480,6 +490,25 @@ export const fraudApi = {
         apiRequest<any>('/api/fraud/alerts/metrics/', {
             method: 'GET'
         }),
+
+    // Approve an alert
+    approve: (id: string) =>
+        apiRequest<any>(`/api/fraud/alerts/${id}/approve/`, {
+            method: 'POST'
+        }),
+
+    // Reject an alert
+    reject: (id: string) =>
+        apiRequest<any>(`/api/fraud/alerts/${id}/reject/`, {
+            method: 'POST'
+        }),
+
+    // Send an alert to review (optionally with notes/reasoning)
+    review: (id: string, reasoning?: string) =>
+        apiRequest<any>(`/api/fraud/alerts/${id}/review/`, {
+            method: 'POST',
+            body: reasoning ? JSON.stringify({ reasoning }) : undefined
+        }),
 };
 
 /**
@@ -590,3 +619,42 @@ export const payoutsApi = {
     getPayoutStats: () => transactionsApi.getTransactionStats({ type: 'payout' } as any),
     updatePayoutStatus: transactionsApi.updateTransactionStatus,
 };
+
+/**
+ * Promotions API
+ */
+export const promotionsApi = {
+    getAll: (params?: { store_id?: number | string; active?: boolean | string }) =>
+        apiRequest<any[]>('/api/promotions/', {
+            method: 'GET',
+            params
+        }),
+
+    getById: (id: number | string) =>
+        apiRequest<any>(`/api/promotions/${id}/`, {
+            method: 'GET'
+        }),
+
+    create: (data: any) =>
+        apiRequest<any>('/api/promotions/', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+
+    update: (id: number | string, data: any) =>
+        apiRequest<any>(`/api/promotions/${id}/`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        }),
+
+    delete: (id: number | string) =>
+        apiRequest<any>(`/api/promotions/${id}/`, {
+            method: 'DELETE'
+        }),
+
+    getStats: () =>
+        apiRequest<any>('/api/promotions/stats/', {
+            method: 'GET'
+        }),
+};
+

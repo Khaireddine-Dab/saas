@@ -5,6 +5,15 @@
 import type { Order } from '@/types/order';
 
 /**
+ * Helper to safely parse dates
+ */
+const parseDate = (dateValue: any): Date => {
+  if (!dateValue) return new Date();
+  const parsed = new Date(dateValue);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
+};
+
+/**
  * Transforme les données brutes du backend en type Order
  */
 export function mapBackendOrderToFrontend(backendOrder: any): Order {
@@ -44,8 +53,8 @@ export function mapBackendOrderToFrontend(backendOrder: any): Order {
       postalCode: '',
       country: '',
     },
-    createdAt: new Date(backendOrder.created_at),
-    updatedAt: new Date(backendOrder.updated_at),
+    createdAt: parseDate(backendOrder.created_at),
+    updatedAt: parseDate(backendOrder.updated_at),
     timeline: [],
     notes: backendOrder.vendor_notes || backendOrder.customer_notes || '',
     requiresManualApproval: false,

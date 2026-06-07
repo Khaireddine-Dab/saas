@@ -64,7 +64,7 @@ const allPermissions: Permission[] = [
   'edit_commissions',
   'view_payouts',
   'approve_payouts',
-  'manage_coupons',
+  'manage_promotions',
   'manage_banners',
   'manage_notifications',
   'view_settings',
@@ -83,7 +83,7 @@ const permissionGroups = {
   'Review Management': ['view_reviews', 'moderate_reviews'],
   Analytics: ['view_analytics', 'view_reports', 'create_reports'],
   'Commission & Payouts': ['view_commissions', 'edit_commissions', 'view_payouts', 'approve_payouts'],
-  'Marketing & Promotions': ['manage_coupons', 'manage_banners', 'manage_notifications'],
+  'Marketing & Promotions': ['manage_promotions', 'manage_banners', 'manage_notifications'],
   'System Administration': ['view_settings', 'edit_settings', 'manage_admins'],
   'Fraud & Security': ['view_fraud_alerts', 'investigate_fraud'],
 };

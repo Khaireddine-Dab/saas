@@ -34,4 +34,6 @@ urlpatterns = [
     path('api/support/', include('support.urls')),
     path('api/fraud/', include('fraud.urls')),
     path('api/bookings/', include('bookings.urls')),
+    path('api/notifications/', include('notifications.urls')),
+    path('api/', include('reels.urls')),
 ]

@@ -304,7 +304,7 @@ export default function ProductsPage() {
 
                   {/* Created */}
                   <div className="col-span-1 hidden lg:flex items-center">
-                    <span className="text-xs text-muted-foreground">{formatDate(product.createdAt.toISOString())}</span>
+                    <span className="text-xs text-muted-foreground">{formatDate(product.createdAt)}</span>
                   </div>
 
                   {/* View store button */}

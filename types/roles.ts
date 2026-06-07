@@ -22,7 +22,7 @@ export type Permission =
   | 'edit_commissions'
   | 'view_payouts'
   | 'approve_payouts'
-  | 'manage_coupons'
+  | 'manage_promotions'
   | 'manage_banners'
   | 'manage_notifications'
   | 'view_settings'
@@ -78,7 +78,7 @@ export const DEFAULT_PERMISSIONS: Record<RoleType, Permission[]> = {
     'edit_commissions',
     'view_payouts',
     'approve_payouts',
-    'manage_coupons',
+    'manage_promotions',
     'manage_banners',
     'manage_notifications',
     'view_settings',
@@ -103,7 +103,7 @@ export const DEFAULT_PERMISSIONS: Record<RoleType, Permission[]> = {
     'view_reports',
     'view_commissions',
     'view_payouts',
-    'manage_coupons',
+    'manage_promotions',
     'manage_banners',
     'manage_notifications',
     'view_settings',

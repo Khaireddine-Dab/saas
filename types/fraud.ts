@@ -28,6 +28,26 @@ export interface FraudMetrics {
   avgResolutionTime: number;
   resolvedAlerts: number;
   falsePositiveRate: number;
+  totalBookingAlerts?: number;
+  totalOrderAlerts?: number;
+  avgRiskScore?: number;
+  recentAlerts24h?: number;
+  recentAlerts7d?: number;
+  levelBreakdown?: {
+    safe: number;
+    suspicious: number;
+    high_risk: number;
+    blocked: number;
+  };
+  recommendationBreakdown?: {
+    approve: number;
+    review: number;
+    reject: number;
+  };
+  entityTypeBreakdown?: {
+    booking: number;
+    order: number;
+  };
 }
 
 export interface FraudFilter {

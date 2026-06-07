@@ -63,6 +63,8 @@ INSTALLED_APPS = [
     'support',
     'fraud',
     'bookings',
+    'reels',
+    'notifications',
 ]
 
 MIDDLEWARE = [

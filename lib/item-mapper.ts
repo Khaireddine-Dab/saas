@@ -4,12 +4,23 @@ import type { Item } from '@/types/item';
  * Transforme les données brutes du backend en type Item
  */
 export function mapBackendItemToFrontend(backendItem: any): Item {
+  // Extraire le nom du store - peut venir de store_details ou store
+  const storeName = backendItem.store_details?.name || 
+                    (backendItem.store ? `Store #${backendItem.store}` : 'Inconnu');
+  
+  // Helper to safely parse dates
+  const parseDate = (dateValue: any): Date => {
+    if (!dateValue) return new Date();
+    const parsed = new Date(dateValue);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  };
+  
   return {
     id: String(backendItem.id),
     itemType: backendItem.item_type || 'PRODUCT',
     itemTypeDisplay: backendItem.item_type_display || 'Produit',
     storeId: String(backendItem.store || ''),
-    storeName: backendItem.store_details?.name || 'Inconnu',
+    storeName: storeName,
     name: backendItem.name || 'Sans nom',
     slug: backendItem.slug || '',
     description: backendItem.description || null,
@@ -38,8 +49,8 @@ export function mapBackendItemToFrontend(backendItem: any): Item {
     ratingAverage: parseFloat(backendItem.rating_average) || 0,
     totalReviews: backendItem.total_reviews || 0,
     
-    createdAt: new Date(backendItem.created_at),
-    updatedAt: new Date(backendItem.updated_at),
+    createdAt: parseDate(backendItem.created_at),
+    updatedAt: parseDate(backendItem.updated_at),
   };
 }
 
