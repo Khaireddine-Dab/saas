@@ -2,97 +2,32 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Menu, Search, Plus, Bell, Sun, Moon, LogOut,
+  Menu, Search, Bell, Sun, Moon, LogOut,
   User, Settings, ShieldCheck, Activity,
-  Building2, Tag, Megaphone, Send, Star,
-  ChevronDown, X, Check, AlertCircle, MessageSquare, UserCheck,
+  ChevronDown, X, Check, Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
-import Image from 'next/image';
-import { logout } from '@/lib/api';
+import { authApi, logout } from '@/lib/api';
 import { toast } from 'sonner';
+import { useNavbarNotifications } from '@/hooks/useNavbarNotifications';
+import { getNotificationVisual, formatNotificationTime } from '@/lib/notification-utils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface Notification {
+interface StoredUser {
   id: string;
-  icon: React.ElementType;
-  iconColor: string;
-  iconBg: string;
-  title: string;
-  desc: string;
-  time: string;
-  read: boolean;
+  email: string;
+  full_name?: string;
+  role?: string;
+  avatar_url?: string;
 }
 
 interface DashboardHeaderProps {
   onSidebarToggle?: () => void;
-  userAvatar?: string;
   userName?: string;
-  userRole?: string;
 }
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    icon: Building2,
-    iconColor: 'text-blue-500',
-    iconBg: 'bg-blue-500/10',
-    title: 'New business registration',
-    desc: 'Café Tunis Central submitted for approval',
-    time: '2m ago',
-    read: false,
-  },
-  {
-    id: '2',
-    icon: AlertCircle,
-    iconColor: 'text-red-400',
-    iconBg: 'bg-red-500/10',
-    title: 'User reported a review',
-    desc: 'Review #4821 flagged as inappropriate',
-    time: '14m ago',
-    read: false,
-  },
-  {
-    id: '3',
-    icon: MessageSquare,
-    iconColor: 'text-amber-400',
-    iconBg: 'bg-amber-500/10',
-    title: 'New review submitted',
-    desc: '★★★★☆ review on Le Baroque Restaurant',
-    time: '1h ago',
-    read: false,
-  },
-  {
-    id: '4',
-    icon: UserCheck,
-    iconColor: 'text-green-400',
-    iconBg: 'bg-green-500/10',
-    title: 'New user registered',
-    desc: 'yassine.t@gmail.com joined the platform',
-    time: '3h ago',
-    read: true,
-  },
-  {
-    id: '5',
-    icon: ShieldCheck,
-    iconColor: 'text-purple-400',
-    iconBg: 'bg-purple-500/10',
-    title: 'System alert',
-    desc: 'Scheduled backup completed successfully',
-    time: '5h ago',
-    read: true,
-  },
-];
-
-const quickActions = [
-  { icon: Building2, label: 'Add Business', color: 'text-blue-400' },
-  { icon: Tag, label: 'Add Category', color: 'text-emerald-400' },
-  { icon: Megaphone, label: 'Create Announcement', color: 'text-amber-400' },
-  { icon: Send, label: 'Send Notification', color: 'text-purple-400' },
-  { icon: Star, label: 'Feature Business', color: 'text-orange-400' },
-];
+const DEFAULT_MALE_AVATAR = 'https://i.pravatar.cc/150?img=12';
 
 const profileMenu = [
   { icon: User, label: 'Profile', divider: false },
@@ -101,6 +36,26 @@ const profileMenu = [
   { icon: Activity, label: 'Activity Logs', divider: true },
   { icon: LogOut, label: 'Logout', divider: false, danger: true },
 ];
+
+function formatUsernameFromEmail(email: string): string {
+  const local = (email.split('@')[0] || '').replace(/\d+$/g, '');
+  if (!local) return email;
+
+  const parts = local.split(/[._-]+/).filter(Boolean);
+  if (parts.length > 1) {
+    return parts
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  return local.charAt(0).toUpperCase() + local.slice(1).toLowerCase();
+}
+
+function getUserDisplayName(user: StoredUser): string {
+  const name = user.full_name?.trim();
+  if (name) return name;
+  return formatUsernameFromEmail(user.email);
+}
 
 // ─── Hook: click outside ──────────────────────────────────────────────────────
 function useClickOutside(ref: React.RefObject<HTMLElement>, handler: () => void) {
@@ -117,33 +72,59 @@ function useClickOutside(ref: React.RefObject<HTMLElement>, handler: () => void)
 // ─── Component ────────────────────────────────────────────────────────────────
 export function DashboardHeader({
   onSidebarToggle,
-  userAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
-  userName = 'Admin User',
-  userRole = 'Administrator',
+  userName: userNameProp,
 }: DashboardHeaderProps) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [user, setUser] = useState<StoredUser | null>(null);
 
   const [searchFocused, setSearchFocused] = useState(false);
   const [searchValue, setSearchValue] = useState('');
 
   const [notifOpen, setNotifOpen] = useState(false);
-  const [notifications, setNotifications] = useState(mockNotifications);
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const {
+    notifications,
+    unreadCount,
+    loading: notifLoading,
+    markRead,
+    markAllRead,
+    goToAll,
+    refresh: refreshNotifications,
+  } = useNavbarNotifications(user?.id);
 
-  const [createOpen, setCreateOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
   const notifRef = useRef<HTMLDivElement>(null!);
-  const createRef = useRef<HTMLDivElement>(null!);
   const profileRef = useRef<HTMLDivElement>(null!);
   const searchRef = useRef<HTMLInputElement>(null!);
 
   useClickOutside(notifRef, () => setNotifOpen(false));
-  useClickOutside(createRef, () => setCreateOpen(false));
   useClickOutside(profileRef, () => setProfileOpen(false));
 
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('user');
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored));
+      } catch {
+        // ignore invalid stored user
+      }
+    }
+
+    authApi.getMe()
+      .then((fresh: StoredUser) => {
+        setUser(fresh);
+        localStorage.setItem('user', JSON.stringify(fresh));
+      })
+      .catch(() => {
+        // keep stored user if refresh fails
+      });
+  }, []);
+
+  const userName = userNameProp ?? (user ? getUserDisplayName(user) : '…');
+  const userAvatar = DEFAULT_MALE_AVATAR;
 
   // Ctrl+K shortcut
   useEffect(() => {
@@ -161,13 +142,15 @@ export function DashboardHeader({
     return () => document.removeEventListener('keydown', handler);
   }, []);
 
-  const markAllRead = () =>
-    setNotifications(n => n.map(x => ({ ...x, read: true })));
-
-  const markRead = (id: string) =>
-    setNotifications(n => n.map(x => x.id === id ? { ...x, read: true } : x));
-
   const isDark = resolvedTheme === 'dark';
+
+  const handleNotifOpen = () => {
+    setNotifOpen((open) => {
+      if (!open) refreshNotifications();
+      return !open;
+    });
+    setProfileOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-50 h-16 flex items-center justify-between px-4 sm:px-6 border-b border-border bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
@@ -222,52 +205,12 @@ export function DashboardHeader({
           <Search className="w-4 h-4" />
         </Button>
 
-        {/* Quick Create */}
-        <div ref={createRef} className="relative">
-          <Button
-            onClick={() => { setCreateOpen(o => !o); setNotifOpen(false); setProfileOpen(false); }}
-            size="sm"
-            className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold px-3 hidden sm:flex"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Create
-            <ChevronDown className={`w-3 h-3 opacity-70 transition-transform ${createOpen ? 'rotate-180' : ''}`} />
-          </Button>
-          {/* Mobile create */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => { setCreateOpen(o => !o); setNotifOpen(false); setProfileOpen(false); }}
-            className="sm:hidden h-8 w-8 text-muted-foreground hover:text-foreground"
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
-
-          {createOpen && (
-            <div className="absolute right-0 top-full mt-2 w-52 bg-popover border border-border rounded-xl shadow-lg shadow-black/10 py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-              <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider px-3 pt-1 pb-2">
-                Quick Actions
-              </p>
-              {quickActions.map(({ icon: Icon, label, color }) => (
-                <button
-                  key={label}
-                  onClick={() => setCreateOpen(false)}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-foreground hover:bg-accent rounded-lg mx-0 transition-colors text-left"
-                >
-                  <Icon className={`w-4 h-4 ${color} shrink-0`} />
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
         {/* Notifications */}
         <div ref={notifRef} className="relative">
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => { setNotifOpen(o => !o); setCreateOpen(false); setProfileOpen(false); }}
+            onClick={handleNotifOpen}
             className="h-8 w-8 relative text-muted-foreground hover:text-foreground hover:bg-accent"
           >
             <Bell className="w-4 h-4" />
@@ -303,35 +246,57 @@ export function DashboardHeader({
 
               {/* List */}
               <div className="max-h-80 overflow-y-auto divide-y divide-border/50">
-                {notifications.map(notif => {
-                  const Icon = notif.icon;
-                  return (
-                    <button
-                      key={notif.id}
-                      onClick={() => markRead(notif.id)}
-                      className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-accent/60 transition-colors group ${!notif.read ? 'bg-accent/20' : ''}`}
-                    >
-                      <div className={`mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${notif.iconBg}`}>
-                        <Icon className={`w-4 h-4 ${notif.iconColor}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-xs font-semibold leading-tight ${notif.read ? 'text-muted-foreground' : 'text-foreground'}`}>
-                          {notif.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">{notif.desc}</p>
-                        <p className="text-[10px] text-muted-foreground/60 mt-1">{notif.time}</p>
-                      </div>
-                      {!notif.read && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
-                      )}
-                    </button>
-                  );
-                })}
+                {notifLoading && notifications.length === 0 ? (
+                  <div className="flex items-center justify-center py-10 text-muted-foreground">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="px-4 py-10 text-center">
+                    <Bell className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">No notifications yet</p>
+                  </div>
+                ) : (
+                  notifications.map((notif) => {
+                    const visual = getNotificationVisual(notif);
+                    const Icon = visual.icon;
+                    return (
+                      <button
+                        key={notif.id}
+                        onClick={() => {
+                          markRead(notif.id, notif.link);
+                          setNotifOpen(false);
+                        }}
+                        className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-accent/60 transition-colors group ${!notif.is_read ? 'bg-accent/20' : ''}`}
+                      >
+                        <div className={`mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${visual.iconBg}`}>
+                          <Icon className={`w-4 h-4 ${visual.iconColor}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-semibold leading-tight ${notif.is_read ? 'text-muted-foreground' : 'text-foreground'}`}>
+                            {notif.title}
+                          </p>
+                          {notif.description && (
+                            <p className="text-xs text-muted-foreground mt-0.5 truncate">{notif.description}</p>
+                          )}
+                          <p className="text-[10px] text-muted-foreground/60 mt-1">
+                            {formatNotificationTime(notif.created_at)}
+                          </p>
+                        </div>
+                        {!notif.is_read && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })
+                )}
               </div>
 
               {/* Footer */}
               <div className="border-t border-border px-4 py-2.5">
-                <button className="text-xs text-primary hover:text-primary/80 font-medium transition-colors">
+                <button
+                  onClick={() => { setNotifOpen(false); goToAll(); }}
+                  className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+                >
                   View all notifications →
                 </button>
               </div>
@@ -360,22 +325,21 @@ export function DashboardHeader({
         {/* Profile */}
         <div ref={profileRef} className="relative">
           <button
-            onClick={() => { setProfileOpen(o => !o); setNotifOpen(false); setCreateOpen(false); }}
+            onClick={() => { setProfileOpen(o => !o); setNotifOpen(false); }}
             className="flex items-center gap-2.5 pl-1 pr-2 py-1 rounded-lg hover:bg-accent transition-colors group"
           >
             <div className="relative w-7 h-7 rounded-lg overflow-hidden border border-border flex-shrink-0">
-              <Image
+              <img
                 src={userAvatar}
                 alt={userName}
-                width={28}
-                height={28}
                 className="w-full h-full object-cover"
               />
               <span className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full border border-background" />
             </div>
-            <div className="hidden sm:block text-left">
-              <p className="text-xs font-semibold text-foreground leading-tight">{userName}</p>
-              <p className="text-[10px] text-muted-foreground leading-tight">{userRole}</p>
+            <div className="hidden sm:block text-left min-w-0 max-w-[140px]">
+              <p className="text-xs font-semibold text-foreground leading-tight truncate" title={userName}>
+                {userName}
+              </p>
             </div>
             <ChevronDown className={`hidden sm:block w-3 h-3 text-muted-foreground transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
           </button>
@@ -386,11 +350,10 @@ export function DashboardHeader({
               <div className="px-3 py-2.5 border-b border-border mb-1">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg overflow-hidden border border-border flex-shrink-0">
-                    <Image src={userAvatar} alt={userName} width={32} height={32} className="w-full h-full object-cover" />
+                    <img src={userAvatar} alt={userName} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-foreground truncate">{userName}</p>
-                    <p className="text-[10px] text-muted-foreground">{userRole}</p>
                   </div>
                 </div>
               </div>

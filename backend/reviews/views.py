@@ -230,6 +230,16 @@ class ReviewFlagView(APIView):
             review.flag_count = ReviewFlag.objects.filter(review=review).aggregate(models.Sum('count'))['count__sum'] or 0
             review.flagged = True
             review.save()
+
+            from notifications.services import notify_admins
+            notify_admins(
+                title='Review reported',
+                description=f'Review #{review.id} was flagged as {reason}.',
+                notification_type='review',
+                link=f'/dashboard/reviews?review_id={review.id}',
+                metadata={'review_id': review.id, 'reason': reason},
+                exclude_user_id=request.user.id,
+            )
             
             return Response(ReviewDetailSerializer(review).data, status=status.HTTP_201_CREATED)
         except Review.DoesNotExist:

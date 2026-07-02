@@ -201,6 +201,46 @@ export const authApi = {
 };
 
 /**
+ * Notifications API
+ */
+export const notificationsApi = {
+    list: (params?: { user_id?: string; type?: string; is_read?: boolean; limit?: number }) =>
+        apiRequest<any>('/api/notifications/', {
+            method: 'GET',
+            params,
+        }).then((data) => {
+            const items = Array.isArray(data) ? data : data.results || [];
+            const limit = params?.limit;
+            return limit ? items.slice(0, limit) : items;
+        }),
+
+    markRead: (id: string) =>
+        apiRequest<any>(`/api/notifications/${id}/`, {
+            method: 'PATCH',
+            body: JSON.stringify({ is_read: true }),
+        }),
+
+    markAllRead: (userId?: string) =>
+        apiRequest<any>('/api/notifications/mark-all-read/', {
+            method: 'POST',
+            body: JSON.stringify(userId ? { user_id: userId } : {}),
+        }),
+
+    create: (data: {
+        user: string;
+        title: string;
+        description?: string;
+        type?: string;
+        link?: string;
+        metadata?: Record<string, unknown>;
+    }) =>
+        apiRequest<any>('/api/notifications/', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        }),
+};
+
+/**
  * Stores API
  */
 export const storesApi = {

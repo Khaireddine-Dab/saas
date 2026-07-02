@@ -49,6 +49,24 @@ class StoreActionView(APIView):
         if action == 'validate':
             store.status = 'PUBLISHED'
             store.save()
+
+            if store.owner_id:
+                from notifications.services import notify_user
+                from users.models import User
+                try:
+                    owner = User.objects.get(id=store.owner_id)
+                    store_name = getattr(store, 'name', None) or f'Store #{store.id}'
+                    notify_user(
+                        owner,
+                        title='Store approved',
+                        description=f'Your store "{store_name}" has been approved.',
+                        notification_type='store',
+                        link='/dashboard/merchants',
+                        metadata={'store_id': store.id},
+                    )
+                except User.DoesNotExist:
+                    pass
+
             return Response({'message': 'Boutique validée avec succès.'})
             
         elif action == 'reject':

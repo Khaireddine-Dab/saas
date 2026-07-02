@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   ChevronLeft, ChevronRight,
-  LayoutDashboard, Users, Briefcase, ShoppingCart,
+  Users, Briefcase, ShoppingCart,
   Package, Star, Tag, Film, Shield, Map,
   BarChart3, Settings, MessageCircle, AlertCircle,
   ReceiptText, CreditCard,
@@ -25,8 +25,6 @@ interface NavItem {
 
 // ─── Navigation Structure ─────────────────────────────────────────────────────
 const navItems: NavItem[] = [
-  { title: 'Dashboard',           href: '/dashboard',                        icon: <LayoutDashboard className="w-4 h-4 text-current" /> },
-
   { title: 'Platform Management', section: true },
   { title: 'Users',               href: '/dashboard/users',                  icon: <Users className="w-4 h-4 text-current" /> },
   { title: 'Merchants',           href: '/dashboard/merchants',              icon: <Briefcase className="w-4 h-4 text-current" /> },
@@ -54,7 +52,6 @@ const navItems: NavItem[] = [
 
 // ─── Active Route Helper ──────────────────────────────────────────────────────
 function isActiveRoute(pathname: string, href: string): boolean {
-  if (href === '/dashboard') return pathname === '/dashboard';
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

@@ -22,9 +22,16 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
         return SupportTicket.objects.filter(customer=user)
 
     def perform_create(self, serializer):
-        # When an owner creates a ticket, we might need to specify the store
-        # For now, let's just save as is, but we could auto-assign based on context
-        serializer.save()
+        ticket = serializer.save()
+        from notifications.services import notify_admins
+        subject = getattr(ticket, 'subject', None) or 'Support ticket'
+        notify_admins(
+            title='New support ticket',
+            description=f'{subject}',
+            notification_type='support',
+            link=f'/dashboard/support/tickets?ticket_id={ticket.id}',
+            metadata={'ticket_id': str(ticket.id)},
+        )
 
 class SupportMessageViewSet(viewsets.ModelViewSet):
     serializer_class = SupportMessageSerializer
@@ -51,8 +58,32 @@ class SupportMessageViewSet(viewsets.ModelViewSet):
         user = self.request.user
         sender_type = 'support' if user.role == 'ADMIN' else 'customer'
         message = serializer.save(sender=user, sender_type=sender_type)
-        
-        # Update last_reply_at on the ticket
+
         ticket = message.ticket
         ticket.last_reply_at = timezone.now()
         ticket.save()
+
+        if str(getattr(user, 'role', '')).upper() != 'ADMIN':
+            from notifications.services import notify_admins
+            notify_admins(
+                title='New support message',
+                description=(message.content or '')[:120],
+                notification_type='support',
+                link=f'/dashboard/support/chat?ticket_id={ticket.id}',
+                metadata={'ticket_id': str(ticket.id), 'message_id': str(message.id)},
+            )
+        elif ticket.customer_id:
+            from notifications.services import notify_user
+            from users.models import User
+            try:
+                customer = User.objects.get(id=ticket.customer_id)
+                notify_user(
+                    customer,
+                    title='Support reply',
+                    description=(message.content or '')[:120],
+                    notification_type='support',
+                    link=f'/dashboard/support/chat?ticket_id={ticket.id}',
+                    metadata={'ticket_id': str(ticket.id), 'message_id': str(message.id)},
+                )
+            except User.DoesNotExist:
+                pass

@@ -42,7 +42,7 @@ export default function LoginPage() {
       localStorage.setItem("user", JSON.stringify(data.user))
 
       toast.success(`Bienvenue, ${data.user.full_name || data.user.email} !`)
-      router.push("/dashboard")
+      router.push("/dashboard/users")
 
     } catch (error: any) {
       toast.error(error.message)

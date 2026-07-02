@@ -328,6 +328,16 @@ class AddUserView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+        from notifications.services import notify_user
+        notify_user(
+            user,
+            title='Welcome to Ro2ya',
+            description='Your account has been created successfully.',
+            notification_type='user',
+            link='/dashboard/users',
+            metadata={'created_by_admin': str(request.user.id)},
+        )
+
         return Response(
             {'message': 'Utilisateur créé avec succès.', 'user': UserSerializer(user).data},
             status=status.HTTP_201_CREATED
@@ -433,9 +443,21 @@ class UserDetailView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
+        old_status = user.status
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            updated_user = serializer.save()
+            new_status = request.data.get('status')
+            if new_status and new_status != old_status:
+                from notifications.services import notify_user
+                notify_user(
+                    updated_user,
+                    title='Account status updated',
+                    description=f'Your account status is now: {new_status}.',
+                    notification_type='user',
+                    link='/dashboard/users',
+                    metadata={'old_status': old_status, 'new_status': new_status},
+                )
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
